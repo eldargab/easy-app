@@ -1,0 +1,21 @@
+{
+  "name": "container",
+  "version": "0.0.0",
+  "description": "Container for your apps",
+  "author": "Eldar Gabdullin <eldargab@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/eldargab/easy-app"
+  },
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "dependencies": {
+    "parse-fn-args": "*"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "should": "*",
+    "test-log": "*"
+  }
+}
