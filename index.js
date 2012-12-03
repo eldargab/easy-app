@@ -245,7 +245,7 @@ Evaluation.prototype.done = function (err, val) {
   this.ended = true
 
   if (err != null) {
-    if (!err instanceof Error) {
+    if (!(err instanceof Error)) {
       err = new Error(String(err))
     }
     err.task = err.task || this.name

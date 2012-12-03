@@ -266,4 +266,25 @@ describe('Container', function () {
       should.not.exist(app.get('super.baz'))
     })
   })
+
+  describe('Error handling', function () {
+    it('Should catch task exceptions', function (done) {
+      app.def('error', function () {
+        throw new Error('hello')
+      }).eval('error', function (err) {
+        err.message.should.equal('hello')
+        done()
+      })
+    })
+
+    it('Should wrap non-error exceptions', function (done) {
+      app.def('foo', function () {
+        throw 'foo'
+      }).eval('foo', function (err) {
+        err.should.be.an.instanceof(Error)
+        err.message.should.equal('foo')
+        done()
+      })
+    })
+  })
 })
