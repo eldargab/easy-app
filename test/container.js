@@ -267,6 +267,51 @@ describe('Container', function () {
     })
   })
 
+  describe('eval() within task', function () {
+    it('Should evaluate tasks', function (done) {
+      app.def('bar', function () {
+        return 'foo'
+      })
+      .def('baz', function (eval, done) {
+        eval('bar', done)
+      })
+      .eval('baz', function (err, val) {
+        if (err) return done(err)
+        val.should.equal('foo')
+        done()
+      })
+    })
+
+    describe('If task name starts with dot should resolve task right...', function () {
+      it('when installed as subapp', function (done) {
+        var subapp = Container()
+          .set('bar', 'foo')
+          .def('baz', function (eval, done) {
+            eval('.bar', done)
+          })
+        app.install('qux', subapp)
+        app.eval('qux.baz', function (err, val) {
+          if (err) return done(err)
+          val.should.equal('foo')
+          done()
+        })
+      })
+
+      it('when standalone', function (done) {
+        app
+        .set('bar', 'foo')
+        .def('baz', function (eval, done) {
+          eval('.bar', done)
+        })
+        .eval('baz', function (err, val) {
+          if (err) return done(err)
+          val.should.equal('foo')
+          done()
+        })
+      })
+    })
+  })
+
   describe('Error handling', function () {
     it('Should catch task exceptions', function (done) {
       app.def('error', function () {

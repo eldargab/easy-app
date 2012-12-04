@@ -67,7 +67,8 @@ Container.prototype.def = function (layer, task, deps, fn) {
   this.thisTasks()[task] = {
     fn: fn,
     deps: deps,
-    layer: layer
+    layer: layer,
+    name: task
   }
   return this
 }
@@ -93,10 +94,11 @@ Container.prototype.install = function (namespace, app, aliases) {
       fn: t.fn,
       layer: t.layer,
       deps: t.deps.map(function (dep) {
-        return dep == 'done'
+        return dep == 'done' || dep == 'eval'
           ? dep
           : namespace + dep
-      })
+      }),
+      namespace: namespace.slice(0, namespace.length - 1)
     }
   })
 
@@ -197,6 +199,16 @@ Evaluation.prototype.evalDeps = function (index) {
     if (dep == 'done') {
       this.async = true
       this.deps[index++] = this.done.bind(this)
+      continue
+    }
+
+    if (dep == 'eval') {
+      this.deps[index++] = function (task, cb) {
+        var name = task[0] == '.'
+          ? this.t.namespace ? this.t.namespace + task : task.slice(1)
+          : task
+        this.app.eval(name, cb)
+      }.bind(this)
       continue
     }
 
