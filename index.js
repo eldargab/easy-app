@@ -92,7 +92,11 @@ Container.prototype.install = function (namespace, app, aliases) {
     return {
       fn: t.fn,
       layer: t.layer,
-      deps: t.deps.map(function (dep) { return namespace + dep})
+      deps: t.deps.map(function (dep) {
+        return dep == 'done'
+          ? dep
+          : namespace + dep
+      })
     }
   })
 

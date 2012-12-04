@@ -188,8 +188,8 @@ describe('Container', function () {
   describe('.install(namespace, app, aliases)', function () {
     it('Should install <app> at <namespace>', function () {
       var subapp = new Container()
-        .def('barbaz', function (bar, baz) {
-          return bar + baz
+        .def('barbaz', function (bar, baz, done) {
+          done(null, bar + baz) // should not clobber done() dependency
         })
         .def('bar', function () {
           return 'bar'
