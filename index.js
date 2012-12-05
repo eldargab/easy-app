@@ -98,7 +98,7 @@ Container.prototype.install = function (namespace, app, aliases) {
           ? dep
           : namespace + dep
       }),
-      namespace: namespace.slice(0, namespace.length - 1)
+      namespace: namespace + (t.namespace || '')
     }
   })
 
@@ -204,9 +204,7 @@ Evaluation.prototype.evalDeps = function (index) {
 
     if (dep == 'eval') {
       this.deps[index++] = function (task, cb) {
-        var name = task[0] == '.'
-          ? this.t.namespace ? this.t.namespace + task : task.slice(1)
-          : task
+        var name = this.t.namespace ? this.t.namespace + task : task
         this.app.eval(name, cb)
       }.bind(this)
       continue

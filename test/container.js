@@ -282,34 +282,43 @@ describe('Container', function () {
       })
     })
 
-    describe('If task name starts with dot should resolve task right...', function () {
-      it('when installed as subapp', function (done) {
-        var subapp = Container()
-          .set('bar', 'foo')
-          .def('baz', function (eval, done) {
-            eval('.bar', done)
-          })
-        app.install('qux', subapp)
-        app.eval('qux.baz', function (err, val) {
-          if (err) return done(err)
-          val.should.equal('foo')
-          done()
+    it('Should work within subapp', function (done) {
+      var subapp = Container()
+        .def('bar', function () {
+          return 'foo'
         })
-      })
-
-      it('when standalone', function (done) {
-        app
-        .set('bar', 'foo')
         .def('baz', function (eval, done) {
-          eval('.bar', done)
+          eval('bar', done)
         })
-        .eval('baz', function (err, val) {
-          if (err) return done(err)
-          val.should.equal('foo')
-          done()
-        })
+
+      app.install('qux', subapp)
+
+      app.eval('qux.baz', function (err, val) {
+        if (err) return done(err)
+        val.should.equal('foo')
+        done()
       })
     })
+
+    it('Should work within deep subapp', function (done) {
+      var deep = Container()
+        .def('bar', function () {
+          return 'foo'
+        })
+        .def('baz', function (eval, done) {
+          eval('bar', done)
+        })
+
+      var subapp = Container().install('qux', deep)
+
+      app.install('hi', subapp)
+
+      app.eval('hi.qux.baz', function (err, val) {
+        if (err) return done(err)
+        val.should.equal('foo')
+        done()
+      })
+      })
   })
 
   describe('Error handling', function () {
