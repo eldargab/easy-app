@@ -111,7 +111,7 @@ Container.prototype.install = function (namespace, app, aliases) {
   })
 
   for (var key in aliases) {
-    this.alias(namespace + key, aliases[key])
+    this.alias(namespace + key, aliases[key] == '*' ? key : aliases[key])
   }
 
   return this

@@ -228,21 +228,23 @@ describe('Container', function () {
 
     it('Should setup passed aliases', function () {
       var subapp = new Container()
-        .def('barbaz', function (bar, baz) {
-          return bar + baz
+        .def('barbazqux', function (bar, baz, qux) {
+          return bar + baz + qux
         })
         .def('bar', function () {
           return 'bar'
         })
 
       app.install('super', subapp, {
-        baz: 'app_baz'
+        baz: 'app_baz',
+        qux: '*'
       })
 
       app.set('app_baz', 'baz')
+      app.set('qux', 'qux')
 
-      app.eval('super.barbaz')
-      app.get('super.barbaz').should.equal('barbaz')
+      app.eval('super.barbazqux')
+      app.get('super.barbazqux').should.equal('barbazqux')
     })
 
     it('Should preserve layers', function () {
