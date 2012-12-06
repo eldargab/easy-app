@@ -47,6 +47,7 @@ Container.prototype.get = function (name) {
 }
 
 Container.prototype.importing = function () {
+  return this
 }
 
 Container.prototype.alias = function (from, to) {
