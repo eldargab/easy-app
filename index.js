@@ -46,6 +46,9 @@ Container.prototype.get = function (name) {
   if (this.aliases[name]) return this.get(this.aliases[name])
 }
 
+Container.prototype.importing = function () {
+}
+
 Container.prototype.alias = function (from, to) {
   this.thisAliases()[from] = to
   return this
