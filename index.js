@@ -273,7 +273,7 @@ Evaluation.prototype.done = function (err, val) {
   }
 
   this.app.set(this.name, val)
-  delete this.app['_eval_' + this.name] // cleanup
+  this.app['_eval_' + this.name] = null // cleanup
 
   for (var i = 0; i < this.callbacks.length; i++) {
     this.callbacks[i].call(this.c, err, val)
