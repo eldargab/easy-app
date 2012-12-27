@@ -75,6 +75,8 @@ Container.prototype.def = function (layer, task, deps, fn) {
     deps = fn.deps || parseFnArgs(fn)
   }
 
+  this.thisValues()[task] = undefined
+
   this.thisTasks()[task] = {
     fn: fn,
     deps: deps,

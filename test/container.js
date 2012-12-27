@@ -117,6 +117,17 @@ describe('Container', function () {
     })
   })
 
+  describe('.def()', function () {
+    it('Should clobber previously setted (evaluated) value', function () {
+      app.set('foo', 'bar').def('foo', function () {
+        return 'qux'
+      })
+      should.not.exist(app.get('foo'))
+      app.eval('foo')
+      app.get('foo').should.equal('qux')
+    })
+  })
+
   describe('Layers', function () {
     it('Task should be bound to its layer', function () {
       app
