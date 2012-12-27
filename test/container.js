@@ -343,4 +343,23 @@ describe('Container', function () {
       })
     })
   })
+
+  describe('.use(plugin)', function () {
+    it('Should call plugin with <app> passed in a first arg', function (done) {
+      app.use(function (_app) {
+        _app.should.equal(app)
+        done()
+      })
+    })
+    it('Should pass arguments to the plugin', function (done) {
+      app.use(function (app, first, second) {
+        first.should.equal('first')
+        second.should.equal('second')
+        done()
+      }, 'first', 'second')
+    })
+    it('Should return <app>', function () {
+      app.use(function () { }).should.equal(app)
+    })
+  })
 })

@@ -23,6 +23,13 @@ function setOwner (obj, prop) {
   })
 }
 
+Container.prototype.use = function (plugin) {
+  var fn = plugin
+  arguments[0] = this
+  fn.apply(this, arguments)
+  return this
+}
+
 Container.prototype.values = {}
 setOwner(Container.prototype, 'values')
 Container.prototype.thisValues = ThisObj('values')
