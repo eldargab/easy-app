@@ -147,16 +147,16 @@ describe('Container', function () {
 
   describe('Aliases', function () {
     it('Should work with .get()', function () {
-      app.alias('a.b.c', 'c')
+      app.alias('a_b_c', 'c')
       app.set('c', 'foo')
-      app.get('a.b.c').should.equal('foo')
+      app.get('a_b_c').should.equal('foo')
     })
 
     it('Should work with .eval()', function (done) {
-      app.alias('a.b.c', 'c')
+      app.alias('a_b_c', 'c')
       app.def('c', function () {
         return 'foo'
-      }).eval('a.b.c', function (err, val) {
+      }).eval('a_b_c', function (err, val) {
         val.should.equal('foo')
         done()
       })
@@ -164,20 +164,20 @@ describe('Container', function () {
 
     describe('nesting', function () {
       beforeEach(function () {
-        app.alias('a.b.c', 'a.c')
-        app.alias('a.c', 'c')
+        app.alias('a_b_c', 'a_c')
+        app.alias('a_c', 'c')
       })
 
       it('Should work with .get()', function () {
         app.set('c', 'foo')
-        app.get('a.b.c').should.equal('foo')
+        app.get('a_b_c').should.equal('foo')
       })
 
       it('Should work with .eval()', function (done) {
         app.def('c', function () {
           return 'foo'
         })
-        app.eval('a.b.c', function (err, val) {
+        app.eval('a_b_c', function (err, val) {
           val.should.equal('foo')
           done()
         })
@@ -198,8 +198,8 @@ describe('Container', function () {
 
       app.install('super', subapp)
 
-      app.eval('super.barbaz')
-      app.get('super.barbaz').should.equal('barbaz')
+      app.eval('super_barbaz')
+      app.get('super_barbaz').should.equal('barbaz')
     })
 
     it('Should allow to just mix subapp, without namespacing', function () {
@@ -223,7 +223,7 @@ describe('Container', function () {
         .alias('a', 'b')
         .set('b', 10)
       app.install('asd', subapp)
-      app.get('asd.a').should.equal(10)
+      app.get('asd_a').should.equal(10)
     })
 
     it('Should setup passed aliases', function () {
@@ -236,15 +236,15 @@ describe('Container', function () {
         })
 
       app.install('super', subapp, {
-        baz: 'app_baz',
+        baz: 'appbaz',
         qux: '*'
       })
 
-      app.set('app_baz', 'baz')
+      app.set('appbaz', 'baz')
       app.set('qux', 'qux')
 
-      app.eval('super.barbazqux')
-      app.get('super.barbazqux').should.equal('barbazqux')
+      app.eval('super_barbazqux')
+      app.get('super_barbazqux').should.equal('barbazqux')
     })
 
     it('Should preserve layers', function () {
@@ -262,10 +262,10 @@ describe('Container', function () {
 
       var runtime = app.run()
 
-      runtime.eval('super.baz')
+      runtime.eval('super_baz')
 
-      app.get('super.bar').should.equal('bar')
-      should.not.exist(app.get('super.baz'))
+      app.get('super_bar').should.equal('bar')
+      should.not.exist(app.get('super_baz'))
     })
   })
 
@@ -295,7 +295,7 @@ describe('Container', function () {
 
       app.install('qux', subapp)
 
-      app.eval('qux.baz', function (err, val) {
+      app.eval('qux_baz', function (err, val) {
         if (err) return done(err)
         val.should.equal('foo')
         done()
@@ -315,7 +315,7 @@ describe('Container', function () {
 
       app.install('hi', subapp)
 
-      app.eval('hi.qux.baz', function (err, val) {
+      app.eval('hi_qux_baz', function (err, val) {
         if (err) return done(err)
         val.should.equal('foo')
         done()

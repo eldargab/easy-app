@@ -83,7 +83,7 @@ Container.prototype.install = function (namespace, app, aliases) {
     app = namespace
     namespace = ''
   } else {
-    namespace += '.'
+    namespace += '_'
   }
   function mix (target, src, cb) {
     cb = cb || function (val) { return val }
