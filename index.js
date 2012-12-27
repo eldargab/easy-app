@@ -262,7 +262,7 @@ Evaluation.prototype.done = function (err, val) {
         : 'Some evaluation called its callback twice'
     )
     if (err) {
-      console.error('It seems that it happened because of exception in the task callback:')
+      console.error('Perhaps it happened because of exception in a task callback:')
       err.stack ? console.error(err.stack) : console.error(String(err))
     }
     return
