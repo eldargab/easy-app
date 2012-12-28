@@ -247,9 +247,9 @@ Evaluation.prototype.evalDeps = function (index) {
 Evaluation.prototype.exec = function () {
   try {
     if (this.async) {
-      this.t.fn.apply(null, this.deps)
+      this.t.fn.apply(this.app, this.deps)
     } else {
-      this.done(null, this.t.fn.apply(null, this.deps))
+      this.done(null, this.t.fn.apply(this.app, this.deps))
     }
   } catch (e) {
     this.done(e)

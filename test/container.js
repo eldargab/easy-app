@@ -89,6 +89,13 @@ describe('Container', function () {
         .eval('foobar')
     })
 
+    it('Should call task with <this> set to <app>', function (done) {
+      app.def('foo', function () {
+        this.should.equal(app)
+        done()
+      }).eval('foo')
+    })
+
     it('Should not evaluate task twice', function () {
       app.def('foo', function () {
         log('foo')
@@ -133,9 +140,11 @@ describe('Container', function () {
       app
         .layer('app')
         .def('app', 'setup', function () {
+          this.should.equal(app)
           return 'setup'
         })
         .def('request', 'user', function () {
+          this.should.equal(req)
           return 'user'
         })
         .def('response', function (user, setup) {
