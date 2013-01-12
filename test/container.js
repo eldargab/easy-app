@@ -165,6 +165,36 @@ describe('Container', function () {
     })
   })
 
+  describe('.at(layer, fn)', function () {
+    it('Should bound all tasks to <layer>', function () {
+      app.at('app', function (fn) {
+        fn.def('foo', function () {
+          return 'foo'
+        })
+      })
+      app.layer('app')
+      app.run().eval('foo')
+      app.get('foo').should.equal('foo')
+    })
+
+    it('Should not clobber layer specified explicitly', function () {
+      app.at('app', function (fn) {
+        fn.def('req', 'foo', function () {
+          return 'foo'
+        })
+      })
+      app.layer('app')
+      var req = app.run().layer('req')
+      req.run().eval('foo')
+      should.not.exist(app.get('foo'))
+      req.get('foo').should.equal('foo')
+    })
+
+    it('Should return <this>', function () {
+      app.at('foo', function () {}).should.equal(app)
+    })
+  })
+
   describe('Aliases', function () {
     it('Should work with .get()', function () {
       app.alias('a_b_c', 'c')

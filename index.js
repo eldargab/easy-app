@@ -80,8 +80,18 @@ Container.prototype.def = function (layer, task, deps, fn) {
   this.thisTasks()[task] = {
     fn: fn,
     deps: deps,
-    layer: layer,
+    layer: layer || this._layer,
     name: task
+  }
+  return this
+}
+
+Container.prototype.at = function (layer, fn) {
+  this._layer = layer
+  try {
+    fn.call(this, this)
+  } finally {
+    this._layer = null
   }
   return this
 }
