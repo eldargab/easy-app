@@ -1,12 +1,15 @@
 {
   "name": "easy-app",
-  "version": "0.0.1alpha5",
-  "description": "Container for your apps",
+  "version": "0.0.1",
+  "description": "Nice home for your applications",
   "author": "Eldar Gabdullin <eldargab@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git://github.com/eldargab/easy-app"
   },
+  "keywords": [
+    "dependency", "injection", "container"
+  ],
   "scripts": {
     "test": "mocha -R spec"
   },
