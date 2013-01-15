@@ -1,0 +1,11 @@
+{
+  "name": "easy-app",
+  "version": "0.0.2",
+  "description": "Simple and powerful container for applications",
+  "keywords": [
+    "dependency", "injection", "container"
+  ],
+  "scripts": [
+    "index.js"
+  ]
+}
