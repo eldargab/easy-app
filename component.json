@@ -5,6 +5,9 @@
   "keywords": [
     "dependency", "injection", "container"
   ],
+  "dependencies": {
+    "eldargab/parse-fn-args": "*"
+  },
   "scripts": [
     "index.js"
   ]
