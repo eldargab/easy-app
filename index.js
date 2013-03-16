@@ -8,21 +8,6 @@ function Container () {
   }
 }
 
-function ThisObj (name) {
-  return function thisObj () {
-    if (this[name].__owner === this) return this[name]
-    this[name] = Object.create(thisObj.call(this.__proto__))
-    setOwner(this, name)
-    return this[name]
-  }
-}
-
-function setOwner (obj, prop) {
-  Object.defineProperty(obj[prop], '__owner', {
-    value: obj
-  })
-}
-
 Container.prototype.use = function (plugin) {
   var fn = plugin
   arguments[0] = this
@@ -30,17 +15,28 @@ Container.prototype.use = function (plugin) {
   return this
 }
 
-Container.prototype.values = {}
-setOwner(Container.prototype, 'values')
-Container.prototype.thisValues = ThisObj('values')
 
-Container.prototype.tasks = {}
-setOwner(Container.prototype, 'tasks')
-Container.prototype.thisTasks = ThisObj('tasks')
+function setOwner (obj, prop) {
+  Object.defineProperty(obj[prop], '__owner', {
+    value: obj
+  })
+}
 
-Container.prototype.aliases = {}
-setOwner(Container.prototype, 'aliases')
-Container.prototype.thisAliases = ThisObj('aliases')
+function defThis (name, obj) {
+  obj[name] = {}
+  setOwner(obj, name)
+  obj['this' + name[0].toUpperCase() + name.slice(1)] = function thisObj () {
+    if (this[name].__owner === this) return this[name]
+    this[name] = Object.create(thisObj.call(this.__proto__))
+    setOwner(this, name)
+    return this[name]
+  }
+}
+
+defThis('values', Container.prototype)
+defThis('tasks', Container.prototype)
+defThis('aliases', Container.prototype)
+
 
 Container.prototype.set = function (name, val) {
   this.thisValues()[name] = val
@@ -69,21 +65,24 @@ Container.prototype.def = function (layer, task, deps, fn) {
     task = layer
     layer = null
   }
-
   if (typeof deps == 'function') { // allow implicit deps
     fn = deps
     deps = fn.deps || parseFnArgs(fn)
   }
 
-  this.thisValues()[task] = undefined
-
-  this.thisTasks()[task] = {
+  var t = {
     fn: fn,
     deps: deps,
     layer: layer || this._layer,
-    name: task
+    namespace: ''
   }
+  this._def(task, t)
   return this
+}
+
+Container.prototype._def = function (name, t) {
+  this.thisValues()[name] = undefined
+  this.thisTasks()[name] = t
 }
 
 Container.prototype.at = function (layer, fn) {
@@ -104,34 +103,33 @@ Container.prototype.install = function (namespace, app, aliases) {
   } else {
     namespace += '_'
   }
-  function mix (target, src, cb) {
-    cb = cb || function (val) { return val }
-    for (var key in src) {
-      target[namespace + key] = cb(src[key], key)
-    }
-  }
-  mix(this.thisValues(), app.values)
+  var self = this
 
-  mix(this.thisTasks(), app.tasks, function (t) {
-    return {
+  forEachProp(app.values, function (name, val) {
+    self.set(namespace + name, val)
+  })
+
+  forEachProp(app.tasks, function (name, t) {
+    self._def(namespace + name, {
       fn: t.fn,
       layer: t.layer,
       deps: t.deps.map(function (dep) {
-        return dep == 'done' || dep == 'eval'
-          ? dep
-          : namespace + dep
+        if (dep == 'done') return 'done'
+        if (dep == 'eval') return 'eval'
+        return namespace + dep
       }),
-      namespace: namespace + (t.namespace || '')
-    }
+      namespace: namespace + t.namespace,
+    })
   })
 
-  mix(this.thisAliases(), app.aliases, function (alias) {
-    return namespace + alias
+  forEachProp(app.aliases, function (from, to) {
+    self.alias(namespace + from, namespace + to)
   })
 
-  for (var key in aliases) {
-    this.alias(namespace + key, aliases[key] == '*' ? key : aliases[key])
-  }
+  forEachProp(aliases, function (from, to) {
+    if (to == '*') to = from
+    self.alias(namespace + from, to)
+  })
 
   return this
 }
@@ -299,3 +297,8 @@ Evaluation.prototype.done = function (err, val) {
   }
 }
 
+function forEachProp (obj, cb) {
+  for (var key in obj) {
+    cb(key, obj[key])
+  }
+}
