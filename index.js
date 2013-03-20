@@ -15,7 +15,6 @@ Container.prototype.use = function (plugin) {
   return this
 }
 
-
 function setOwner (obj, prop) {
   Object.defineProperty(obj[prop], '__owner', {
     value: obj
@@ -36,7 +35,6 @@ function defThis (name, obj) {
 defThis('values', Container.prototype)
 defThis('tasks', Container.prototype)
 defThis('aliases', Container.prototype)
-
 
 Container.prototype.set = function (name, val) {
   this.thisValues()[name] = val
@@ -96,13 +94,14 @@ Container.prototype.at = function (layer, fn) {
 }
 
 Container.prototype.install = function (namespace, app, aliases) {
-  if (typeof namespace != 'string') {
+  if (typeof namespace == 'object' && namespace) {
     aliases = app
     app = namespace
     namespace = ''
   } else {
-    namespace += '_'
+    namespace = namespace ? namespace + '_' : ''
   }
+
   var self = this
 
   forEachProp(app.values, function (name, val) {
@@ -206,7 +205,6 @@ Evaluation.prototype.setApp = function () {
 Evaluation.prototype.start = function () {
   this.evalDeps(0)
 }
-
 
 Evaluation.prototype.evalDeps = function (index) {
   var sync = true

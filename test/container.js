@@ -268,6 +268,12 @@ describe('Container', function () {
       app.get('barbaz').should.equal('barbaz')
     })
 
+    it('Should allow (null, app) signature', function () {
+      var subapp = Container().set('foo', 'foo')
+      app.install(null, subapp)
+      app.get('foo').should.equal('foo')
+    })
+
     it('Should preserve aliases', function () {
       var subapp = new Container()
         .alias('a', 'b')
