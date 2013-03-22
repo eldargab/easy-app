@@ -1,6 +1,8 @@
 var should = require('should')
 var Log = require('test-log')
 var Container = require('..')
+var nssuffix = Container.nssuffix
+var nsconcat = Container.nsconcat
 
 describe('Container', function () {
  var app, log
@@ -416,6 +418,27 @@ describe('Container', function () {
     })
     it('Should return <app>', function () {
       app.use(function () { }).should.equal(app)
+    })
+  })
+
+  describe('nssuffix', function () {
+    it('ns, ns_task -> task', function () {
+      nssuffix('ns', 'ns_task').should.equal('task')
+    })
+    it('ns1, ns2_task -> ns2_task', function () {
+      nssuffix('ns1', 'ns2_task').should.equal('ns2_task')
+    })
+  })
+
+  describe('nsconcat', function () {
+    it('ns, task -> ns_task', function () {
+      nsconcat('ns', 'task').should.equal('ns_task')
+    })
+    it('null, task -> task', function () {
+      nsconcat('', 'task').should.equal('task')
+    })
+    it('ns, null -> ns', function () {
+      nsconcat('ns', '').should.equal('ns')
     })
   })
 })

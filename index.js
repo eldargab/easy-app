@@ -1,6 +1,6 @@
 var parseFnArgs = require('parse-fn-args')
 
-module.exports = Container
+exports = module.exports = Container
 
 function Container () {
   if (!(this instanceof Container)) {
@@ -63,6 +63,7 @@ Container.prototype.def = function (layer, task, deps, fn) {
     task = layer
     layer = null
   }
+
   if (typeof deps == 'function') { // allow implicit deps
     fn = deps
     deps = fn.deps || parseFnArgs(fn)
@@ -74,7 +75,9 @@ Container.prototype.def = function (layer, task, deps, fn) {
     layer: layer || this._layer,
     namespace: ''
   }
+
   this._def(task, t)
+
   return this
 }
 
@@ -93,41 +96,41 @@ Container.prototype.at = function (layer, fn) {
   return this
 }
 
-Container.prototype.install = function (namespace, app, aliases) {
-  if (typeof namespace == 'object' && namespace) {
+Container.prototype.install = function (ns, app, aliases) {
+  if (typeof ns == 'object' && ns) {
     aliases = app
-    app = namespace
-    namespace = ''
-  } else {
-    namespace = namespace ? namespace + '_' : ''
+    app = ns
+    ns = ''
   }
 
   var self = this
 
   forEachProp(app.values, function (name, val) {
-    self.set(namespace + name, val)
+    self.set(nsconcat(ns, name), val)
   })
 
   forEachProp(app.tasks, function (name, t) {
-    self._def(namespace + name, {
+    self._def(nsconcat(ns, name), {
       fn: t.fn,
       layer: t.layer,
       deps: t.deps.map(function (dep) {
         if (dep == 'done') return 'done'
         if (dep == 'eval') return 'eval'
-        return namespace + dep
+        return nsconcat(ns, dep)
       }),
-      namespace: namespace + t.namespace,
+      namespace: nsconcat(ns, t.namespace),
     })
   })
 
   forEachProp(app.aliases, function (from, to) {
-    self.alias(namespace + from, namespace + to)
+    from = nsconcat(ns, from)
+    to = nsconcat(ns, to)
+    self.alias(from, to)
   })
 
   forEachProp(aliases, function (from, to) {
     if (to == '*') to = from
-    self.alias(namespace + from, to)
+    self.alias(nsconcat(ns, from), to)
   })
 
   return this
@@ -223,7 +226,7 @@ Evaluation.prototype.evalDeps = function (index) {
 
     if (dep == 'eval') {
       this.deps[index++] = function (task, cb) {
-        var name = this.t.namespace ? this.t.namespace + task : task
+        var name = nsconcat(this.t.namespace, task)
         this.app.eval(name, cb)
       }.bind(this)
       continue
@@ -300,3 +303,20 @@ function forEachProp (obj, cb) {
     cb(key, obj[key])
   }
 }
+
+function nsconcat (ns, task) {
+  if (!ns) return task
+  if (!task) return ns
+  return ns + '_' + task
+}
+
+function nssuffix (ns, task) {
+  if (!ns) return task
+  if (!task) return task
+  if (task.indexOf(ns + '_') != 0) return task
+  return task.slice(ns.length + 1)
+}
+
+exports.nsconcat = nsconcat
+
+exports.nssuffix = nssuffix
