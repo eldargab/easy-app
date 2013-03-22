@@ -169,8 +169,8 @@ describe('Container', function () {
 
   describe('.at(layer, fn)', function () {
     it('Should bound all tasks to <layer>', function () {
-      app.at('app', function (fn) {
-        fn.def('foo', function () {
+      app.at('app', function (app) {
+        app.def('foo', function () {
           return 'foo'
         })
       })
@@ -180,8 +180,8 @@ describe('Container', function () {
     })
 
     it('Should not clobber layer specified explicitly', function () {
-      app.at('app', function (fn) {
-        fn.def('req', 'foo', function () {
+      app.at('app', function (app) {
+        app.def('req', 'foo', function () {
           return 'foo'
         })
       })
@@ -190,6 +190,24 @@ describe('Container', function () {
       req.run().eval('foo')
       should.not.exist(app.get('foo'))
       req.get('foo').should.equal('foo')
+    })
+
+    it('Should support nesting', function () {
+      app.at('app', function (app) {
+        app.at('req', function (app) {
+          app.def('req', function (env) {
+            return 'req'
+          })
+        })
+        app.def('env', function () {
+          return 'env'
+        })
+      })
+      app.layer('app')
+      var req = app.run().layer('req')
+      req.run().eval('req')
+      req.get('req').should.equal('req')
+      app.get('env').should.equal('env')
     })
 
     it('Should return <this>', function () {

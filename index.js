@@ -87,11 +87,12 @@ Container.prototype._def = function (name, t) {
 }
 
 Container.prototype.at = function (layer, fn) {
+  var prev = this._layer
   this._layer = layer
   try {
     fn.call(this, this)
   } finally {
-    this._layer = null
+    this._layer = prev
   }
   return this
 }
