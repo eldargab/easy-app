@@ -15,19 +15,13 @@ Container.prototype.use = function (plugin) {
   return this
 }
 
-function setOwner (obj, prop) {
-  Object.defineProperty(obj[prop], '__owner', {
-    value: obj
-  })
-}
 
 function defThis (name, obj) {
-  obj[name] = {}
-  setOwner(obj, name)
+  obj[name] = {__owner: obj}
   obj['this' + name[0].toUpperCase() + name.slice(1)] = function thisObj () {
     if (this[name].__owner === this) return this[name]
-    this[name] = Object.create(thisObj.call(this.__proto__))
-    setOwner(this, name)
+    this[name] = {__proto__: thisObj.call(this.__proto__)}
+    this[name].__owner = this
     return this[name]
   }
 }
@@ -143,7 +137,7 @@ Container.prototype.layer = function (name) {
 }
 
 Container.prototype.run = function () {
-  return Object.create(this)
+  return {__proto__: this}
 }
 
 Container.prototype.eval = function (task, cb) {
@@ -301,6 +295,7 @@ Evaluation.prototype.done = function (err, val) {
 
 function forEachProp (obj, cb) {
   for (var key in obj) {
+    if (key == '__owner') continue
     cb(key, obj[key])
   }
 }
