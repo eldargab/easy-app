@@ -7,25 +7,46 @@ app
 .set('three', 3)
 .set('four', 4)
 .set('five', 5)
-.def('1 dep', function (one) {
+.def('onedep', function (one) {
   return one
 })
-.def('5 deps', function (one, two, three, four, five) {
+.def('fivedeps', function (one, two, three, four, five) {
   return one
+})
+.def('a', function () {
+  return 'a'
+})
+.def('b', function () {
+  return 'b'
+})
+.def('ab', function (a, b) {
+  return a + b
+})
+.def('async', function (two, done) {
+  done(null, two)
+})
+.def('bone', function (b, one) {
+  return b + one
+})
+.def('computation', function (bone, two, ab, done) {
+  done(null, bone + async + ab)
 })
 
 function noop () {}
 
 
-
 var suite = new Bench.Suite
 
 suite.add('1 dep', function () {
-  app.run().eval('1 dep', noop)
+  app.run().eval('onedep', noop)
 })
 
 suite.add('5 deps', function () {
-  app.run().eval('5 deps', noop)
+  app.run().eval('fivedeps', noop)
+})
+
+suite.add('computation', function () {
+  app.run().eval('computation', noop)
 })
 
 suite.on('cycle', function (ev, bench) {
