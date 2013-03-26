@@ -35,14 +35,6 @@ describe('Container', function () {
       end(null, 'ok')
     })
 
-    it('Should call callback with <this> set to <app>', function () {
-      app.def('foo', function () {
-        return 'bar'
-      }).eval('foo', function () {
-        this.should.equal(app)
-      })
-    })
-
     it('Should evaluate all task dependencies before evaluating task itself', function () {
       var b_end, c_end, d_end
 
@@ -409,12 +401,23 @@ describe('Container', function () {
       })
     })
 
+    it('Should set .task property of error to the name of throwed task', function (done) {
+      app.def('bug', function () {
+        throw new Error('Ups')
+      }).def('task', function (bug) {
+        return bug
+      }).eval('task', function (err) {
+        err.task.should.equal('bug')
+        done()
+      })
+    })
+
     it('Should wrap non-error exceptions', function (done) {
       app.def('foo', function () {
         throw 'foo'
       }).eval('foo', function (err) {
         err.should.be.an.instanceof(Error)
-        err.message.should.equal('foo')
+        err.orig.should.equal('foo')
         done()
       })
     })

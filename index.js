@@ -63,21 +63,20 @@ Container.prototype.def = function (layer, task, deps, fn) {
     deps = fn.deps || parseFnArgs(fn)
   }
 
-  var t = {
+  this._def(task, {
     fn: fn,
     deps: deps,
+    sync: !~deps.indexOf('done'),
     layer: layer || this._layer,
     namespace: ''
-  }
-
-  this._def(task, t)
+  })
 
   return this
 }
 
-Container.prototype._def = function (name, t) {
-  this.thisValues()[name] = undefined
-  this.thisTasks()[name] = t
+Container.prototype._def = function (task, def) {
+  this.thisValues()[task] = undefined
+  this.thisTasks()[task] = def
 }
 
 Container.prototype.at = function (layer, fn) {
@@ -107,6 +106,7 @@ Container.prototype.install = function (ns, app, aliases) {
   forEachProp(app.tasks, function (name, t) {
     self._def(nsconcat(ns, name), {
       fn: t.fn,
+      sync: t.sync,
       layer: t.layer,
       deps: t.deps.map(function (dep) {
         if (dep == 'done') return 'done'
@@ -141,156 +141,129 @@ Container.prototype.run = function () {
 }
 
 Container.prototype.eval = function (task, cb) {
-  var val = this.values[task]
+  cb = cb || noop
 
+  var val = this.values[task]
   if (val !== undefined) {
-    if (cb) val instanceof Error
-      ? cb.call(this, val)
-      : cb.call(this, null, val)
+    val instanceof Error
+      ? cb(val)
+      : cb(null, val)
     return
   }
 
   if (this.aliases[task]) {
+    var self = this
     this.eval(this.aliases[task], function (err, val) {
-      this.set(task, err || val)
-      cb.call(this, err, val)
+      self.thisTasks()[task] = err || val
+      cb(err, val)
     })
     return
   }
 
-  var ev = '_eval_' + task
-  if (!this[ev]) {
-    var t = this.tasks[task]
-    if (!t) return cb && cb(new Error('Task ' + task + ' is not defined'))
-    new Evaluation(this, cb)
-      .task(task, t)
-      .start()
-  } else {
-    cb && this[ev].ondone(cb)
+  var ondone = this['_ondone_' + task]
+  if (ondone) return ondone(cb)
+
+  var def = this.tasks[task]
+  if (!def) return cb(new Error('Task ' + task + ' is not defined'))
+
+  evaluate(this, task, def, cb)
+}
+
+function evaluate (app, task, def, cb) {
+  if (def.layer) app = find(app, def.layer)
+
+  var done = false
+    , callbacks
+
+  function ondone (err, val) {
+    if (done) return
+    done = true
+    if (err != null) {
+      if (!(err instanceof Error)) {
+        var orig = err
+        err = new Error('None error object was throwed')
+        err.orig = orig
+      }
+      err.task = err.task || task
+      val = err
+    }
+    if (val === undefined) val = null
+    app.thisValues()[task] = val
+    app['_ondone_' + task] = null // cleanup
+    cb(err, val)
+    if (callbacks) {
+      for (var i = 0; i < callbacks.length; i++) {
+        callbacks[i](err, val)
+      }
+    }
+  }
+
+  evalWithDeps(app, def, new Array(def.deps.length), 0, ondone)
+
+  if (!done) {
+    app['_ondone_' + task] = function (fn) {
+      (callbacks || (callbacks = [])).push(fn)
+    }
   }
 }
 
-
-function Evaluation (container, cb) {
-  this.c = container
-  this.callbacks = []
-  this.deps = []
-  cb && this.ondone(cb)
-}
-
-Evaluation.prototype.ondone = function (cb) {
-  this.callbacks.push(cb)
-}
-
-Evaluation.prototype.task = function (name, def) {
-  this.t = def
-  this.name = name
-  this.setApp()
-  this.app['_eval_' + this.name] = this
-  return this
-}
-
-Evaluation.prototype.setApp = function () {
-  if (!this.t.layer) return this.app = this.c
-  var app = this.c
-  while (app.name && (app.name != this.t.layer || !app.hasOwnProperty('name'))) {
+function find (app, layer) {
+  var top = app
+  while (app.name && (app.name != layer || !app.hasOwnProperty('name'))) {
     app = app.__proto__
   }
-  this.app = app.name == this.t.layer ? app : this.c
+  return app.name == layer ? app : top
 }
 
-
-Evaluation.prototype.start = function () {
-  this.evalDeps(0)
-}
-
-Evaluation.prototype.evalDeps = function (index) {
+function evalWithDeps (app, def, deps, start, ondone) {
   var sync = true
-    , deps = this.t.deps
-    , val
-
-  while (sync) {
-    var dep = deps[index]
-    if (!dep) return this.exec()
+  for (var i = start; i < def.deps.length; i++) {
+    var dep = def.deps[i]
 
     if (dep == 'done') {
-      this.async = true
-      this.deps[index++] = this.done.bind(this)
+      deps[i] = ondone
       continue
     }
 
     if (dep == 'eval') {
-      this.deps[index++] = function (task, cb) {
-        var name = nsconcat(this.t.namespace, task)
-        this.app.eval(name, cb)
-      }.bind(this)
+      deps[i] = function (task, fn) {
+        task = nsconcat(def.namespace, task)
+        app.eval(task, fn)
+      }
       continue
     }
 
-    val = this.app.values[dep]
+    var val = app.values[dep]
     if (val !== undefined) {
-      if (val instanceof Error) return this.done(val)
-      this.deps[index++] = val
+      if (val instanceof Error) return ondone(val)
+      deps[i] = val
       continue
     }
 
     var done = false
 
-    this.app.eval(dep, function (err, val) {
-      if (err) return this.done(err)
+    app.eval(dep, function (err, val) {
+      if (err) return ondone(err)
       done = true
-      this.deps[index++] = val
+      deps[i] = val
       if (sync) return
-      this.evalDeps(index)
-    }.bind(this))
-
+      evalWithDeps(app, def, deps, i, ondone)
+    })
     sync = done
+    if (!sync) return
   }
+  exec(app, def, deps, ondone)
 }
 
-Evaluation.prototype.exec = function () {
+function exec (app, def, deps, ondone) {
+  var ret
   try {
-    if (this.async) {
-      this.t.fn.apply(this.app, this.deps)
-    } else {
-      this.done(null, this.t.fn.apply(this.app, this.deps))
-    }
+    ret = def.fn.apply(app, deps)
   } catch (e) {
-    this.done(e)
-  }
-}
-
-Evaluation.prototype.done = function (err, val) {
-  if (this.ended) {
-    console.error(
-      this.name
-        ? 'Task <' + this.name + '> called its callback twice'
-        : 'Some evaluation called its callback twice'
-    )
-    if (err) {
-      console.error('Perhaps it happened because of exception in a task callback:')
-      err.stack ? console.error(err.stack) : console.error(String(err))
-    }
+    ondone(e)
     return
   }
-  this.ended = true
-
-  if (err != null) {
-    if (!(err instanceof Error)) {
-      err = new Error(String(err))
-    }
-    err.task = err.task || this.name
-    val = err
-  } else {
-    val = val === undefined ? null : val
-  }
-
-  this.app.set(this.name, val)
-  this.app['_eval_' + this.name] = null // cleanup
-
-  for (var i = 0; i < this.callbacks.length; i++) {
-    this.callbacks[i].call(this.c, err, val)
-  }
+  if (def.sync) ondone(null, ret)
 }
 
 function forEachProp (obj, cb) {
@@ -299,6 +272,8 @@ function forEachProp (obj, cb) {
     cb(key, obj[key])
   }
 }
+
+function noop () {}
 
 function nsconcat (ns, task) {
   if (!ns) return task
