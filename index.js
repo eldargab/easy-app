@@ -15,7 +15,6 @@ Container.prototype.use = function (plugin) {
   return this
 }
 
-
 function defThis (name, obj) {
   obj[name] = {__owner: obj}
   obj['this' + name[0].toUpperCase() + name.slice(1)] = function thisObj () {
@@ -30,6 +29,22 @@ defThis('values', Container.prototype)
 defThis('tasks', Container.prototype)
 defThis('aliases', Container.prototype)
 
+Container.prototype.imports = createImports(null, Container.prototype)
+
+// since .imports hash is public we want .__owner to be unenumerated property
+function createImports (proto, owner) {
+  return Object.create(proto, {
+    __owner: {
+      value: owner
+    }
+  })
+}
+
+Container.prototype.thisImports = function () {
+  if (this.imports.__owner === this) return this.imports
+  return this.imports = createImports(this.thisImports.call(this.__proto__), this)
+}
+
 Container.prototype.set = function (name, val) {
   this.thisValues()[name] = val
   return this
@@ -42,6 +57,10 @@ Container.prototype.get = function (name) {
 }
 
 Container.prototype.importing = function () {
+  var imports = [].concat.apply([], [].slice.call(arguments))
+  for (var i = 0; i < imports.length; i++) {
+    this.thisImports()[imports[i]] = true
+  }
   return this
 }
 
