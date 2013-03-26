@@ -63,7 +63,7 @@ var subapp = App() // subapp is a normal app
 subapp.def('req', function (bar, baz) {})
 
 // Specify missing tasks.
-subapp.importing( // currently noop
+subapp.importing(
   'bar',
   'baz'
 )
@@ -97,9 +97,12 @@ app
 // or alternatively
 app.install('super', subapp, {
   'bar': 'bar',
-  'baz': '*' // shortcut for 'baz':'baz'
+  'baz': 'baz'
 })
 ```
+
+But because `.install` setups aliases for undefined imports automatically
+we could stick with just `app.install('super', subapp)`
 
 ## Layers
 

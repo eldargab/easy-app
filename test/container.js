@@ -390,23 +390,42 @@ describe('Container', function () {
 
     it('Should setup passed aliases', function () {
       var subapp = new Container()
-        .def('barbazqux', function (bar, baz, qux) {
-          return bar + baz + qux
+        .def('barbaz', function (bar, baz) {
+          return bar + baz
         })
         .def('bar', function () {
           return 'bar'
         })
 
       app.install('super', subapp, {
-        baz: 'appbaz',
-        qux: '*'
+        baz: 'appbaz'
       })
 
       app.set('appbaz', 'baz')
-      app.set('qux', 'qux')
 
-      app.eval('super_barbazqux')
-      app.get('super_barbazqux').should.equal('barbazqux')
+      app.eval('super_barbaz')
+      app.get('super_barbaz').should.equal('barbaz')
+    })
+
+    it('Should auto alias undefined imports', function (done) {
+      var subapp = Container()
+        .importing('foo')
+        .def('foobar', function (foo) {
+          return foo + 'bar'
+        })
+      app
+      .install('super', subapp)
+      .set('foo', 'foo')
+      .eval('super_foobar', function (err, val) {
+        val.should.equal('foobar')
+        done()
+      })
+    })
+
+    it('Should not auto alias on mixing', function () {
+      var subapp = Container().importing('foo')
+      app.install(subapp)
+      should.not.exist(app.aliases.foo)
     })
 
     it('Should preserve layers', function () {

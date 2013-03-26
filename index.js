@@ -156,9 +156,16 @@ Container.prototype.install = function (ns, app, aliases) {
   })
 
   forEachProp(aliases, function (from, to) {
-    if (to == '*') to = from
     self.alias(nsconcat(ns, from), to)
   })
+
+  if (ns) {
+    for (var imp in app.imports) {
+      var from = nsconcat(ns, imp)
+      if (!this.defined(from))
+        this.alias(from, imp)
+    }
+  }
 
   return this
 }
