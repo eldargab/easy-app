@@ -116,6 +116,31 @@ describe('Container', function () {
     it('Should set task value', function () {
       app.set('a', 'b').get('a').should.equal('b')
     })
+
+    it('Should have precedence over aliases', function (done) {
+      app.set('b', 'b')
+      app.alias('a', 'b')
+      app.set('a', 'a')
+      app.get('a').should.equal('a')
+      app.eval('a', function (err, a) {
+        a.should.equal('a')
+        app.set('a', undefined)
+        app.get('a').should.equal('b')
+        done()
+      })
+    })
+
+    it('Should have precedence over task definitions', function (done) {
+      app.def('a', function () {
+        return 'b'
+      })
+      app.set('a', 'a')
+      app.get('a').should.equal('a')
+      app.eval('a', function (err, a) {
+        a.should.equal('a')
+        done()
+      })
+    })
   })
 
   describe('.def()', function () {
@@ -138,6 +163,70 @@ describe('Container', function () {
       app.eval('a', function (err, val) {
         val.should.equal('a')
         done()
+      })
+    })
+  })
+
+  describe('Aliases', function () {
+    it('Should work with .get()', function () {
+      app.alias('a_b_c', 'c')
+      app.set('c', 'foo')
+      app.get('a_b_c').should.equal('foo')
+    })
+
+    it('Should work with .eval()', function (done) {
+      app.alias('a_b_c', 'c')
+      app.def('c', function () {
+        return 'foo'
+      }).eval('a_b_c', function (err, val) {
+        val.should.equal('foo')
+        done()
+      })
+    })
+
+    it('Should clobber previous values', function (done) {
+      app.set('a', 'a')
+      app.set('b', 'b')
+      app.alias('a', 'b')
+      app.get('a').should.equal('b')
+      app.eval('a', function (err, val) {
+        val.should.equal('b')
+        done()
+      })
+    })
+
+    it('Should clobber previous task definitions', function (done) {
+      app.def('a', function () {
+        return 'a'
+      })
+      app.set('b', 'b')
+      app.alias('a', 'b')
+      app.get('a').should.equal('b')
+      app.eval('a', function (err, val) {
+        val.should.equal('b')
+        done()
+      })
+    })
+
+    describe('nesting', function () {
+      beforeEach(function () {
+        app.alias('a_b_c', 'a_c')
+        app.alias('a_c', 'c')
+      })
+
+      it('Should work with .get()', function () {
+        app.set('c', 'foo')
+        app.get('a_b_c').should.equal('foo')
+      })
+
+      it('Should work with .eval()', function (done) {
+        app.def('c', function () {
+          return 'foo'
+        })
+        app.eval('a_b_c', function (err, val) {
+          val.should.equal('foo')
+          done()
+        })
       })
     })
   })
@@ -217,70 +306,6 @@ describe('Container', function () {
 
     it('Should return <this>', function () {
       app.at('foo', function () {}).should.equal(app)
-    })
-  })
-
-  describe('Aliases', function () {
-    it('Should work with .get()', function () {
-      app.alias('a_b_c', 'c')
-      app.set('c', 'foo')
-      app.get('a_b_c').should.equal('foo')
-    })
-
-    it('Should work with .eval()', function (done) {
-      app.alias('a_b_c', 'c')
-      app.def('c', function () {
-        return 'foo'
-      }).eval('a_b_c', function (err, val) {
-        val.should.equal('foo')
-        done()
-      })
-    })
-
-    it('Should clobber previous values', function (done) {
-      app.set('a', 'a')
-      app.set('b', 'b')
-      app.alias('a', 'b')
-      app.get('a').should.equal('b')
-      app.eval('a', function (err, val) {
-        val.should.equal('b')
-        done()
-      })
-    })
-
-    it('Should clobber previous task definitions', function (done) {
-      app.def('a', function () {
-        return 'a'
-      })
-      app.set('b', 'b')
-      app.alias('a', 'b')
-      app.get('a').should.equal('b')
-      app.eval('a', function (err, val) {
-        val.should.equal('b')
-        done()
-      })
-    })
-
-    describe('nesting', function () {
-      beforeEach(function () {
-        app.alias('a_b_c', 'a_c')
-        app.alias('a_c', 'c')
-      })
-
-      it('Should work with .get()', function () {
-        app.set('c', 'foo')
-        app.get('a_b_c').should.equal('foo')
-      })
-
-      it('Should work with .eval()', function (done) {
-        app.def('c', function () {
-          return 'foo'
-        })
-        app.eval('a_b_c', function (err, val) {
-          val.should.equal('foo')
-          done()
-        })
-      })
     })
   })
 
