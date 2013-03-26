@@ -46,6 +46,8 @@ Container.prototype.importing = function () {
 }
 
 Container.prototype.alias = function (from, to) {
+  this.thisValues()[from] = undefined
+  this.thisTasks()[from] = undefined
   this.thisAliases()[from] = to
   return this
 }
@@ -76,6 +78,7 @@ Container.prototype.def = function (layer, task, deps, fn) {
 
 Container.prototype._def = function (task, def) {
   this.thisValues()[task] = undefined
+  this.thisAliases()[task] = undefined
   this.thisTasks()[task] = def
 }
 
@@ -269,6 +272,7 @@ function exec (app, def, deps, ondone) {
 function forEachProp (obj, cb) {
   for (var key in obj) {
     if (key == '__owner') continue
+    if (obj[key] === undefined) continue
     cb(key, obj[key])
   }
 }

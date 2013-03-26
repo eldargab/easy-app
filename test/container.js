@@ -119,13 +119,26 @@ describe('Container', function () {
   })
 
   describe('.def()', function () {
-    it('Should clobber previously setted (evaluated) value', function () {
+    it('Should clobber previous values', function () {
       app.set('foo', 'bar').def('foo', function () {
         return 'qux'
       })
       should.not.exist(app.get('foo'))
       app.eval('foo')
       app.get('foo').should.equal('qux')
+    })
+
+    it('Should clobber previous aliases', function (done) {
+      app.set('b', 'b')
+      app.alias('a', 'b')
+      app.def('a', function () {
+        return 'a'
+      })
+      should.not.exist(app.get('a'))
+      app.eval('a', function (err, val) {
+        val.should.equal('a')
+        done()
+      })
     })
   })
 
@@ -220,6 +233,30 @@ describe('Container', function () {
         return 'foo'
       }).eval('a_b_c', function (err, val) {
         val.should.equal('foo')
+        done()
+      })
+    })
+
+    it('Should clobber previous values', function (done) {
+      app.set('a', 'a')
+      app.set('b', 'b')
+      app.alias('a', 'b')
+      app.get('a').should.equal('b')
+      app.eval('a', function (err, val) {
+        val.should.equal('b')
+        done()
+      })
+    })
+
+    it('Should clobber previous task definitions', function (done) {
+      app.def('a', function () {
+        return 'a'
+      })
+      app.set('b', 'b')
+      app.alias('a', 'b')
+      app.get('a').should.equal('b')
+      app.eval('a', function (err, val) {
+        val.should.equal('b')
         done()
       })
     })
