@@ -167,6 +167,38 @@ describe('Container', function () {
     })
   })
 
+  describe('.defined(task)', function () {
+    it('Should return true if task is defined', function () {
+      app.set('foo', null)
+      app.def('bar', function () {})
+      app.alias('baz', 'foo')
+
+      app.defined('foo').should.be.true
+      app.defined('bar').should.be.true
+      app.defined('baz').should.be.true
+    })
+
+    it('Should return false otherwise', function () {
+      app.defined('baz').should.be.false
+    })
+  })
+
+  describe('.undefine(task)', function () {
+    it('Should delete task definition', function () {
+      app.set('foo', 'foo')
+      app.def('bar', function () {})
+      app.alias('baz', 'foo')
+
+      app.undefine('foo')
+      app.undefine('bar')
+      app.undefine('baz')
+
+      app.defined('foo').should.be.false
+      app.defined('bar').should.be.false
+      app.defined('baz').should.be.false
+    })
+  })
+
   describe('Aliases', function () {
     it('Should work with .get()', function () {
       app.alias('a_b_c', 'c')

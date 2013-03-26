@@ -45,6 +45,26 @@ Container.prototype.thisImports = function () {
   return this.imports = createImports(this.thisImports.call(this.__proto__), this)
 }
 
+Container.prototype.importing = function () {
+  var imports = [].concat.apply([], [].slice.call(arguments))
+  for (var i = 0; i < imports.length; i++) {
+    this.thisImports()[imports[i]] = true
+  }
+  return this
+}
+
+Container.prototype.defined = function (task) {
+  return this.values[task] !== undefined
+    || !!this.tasks[task]
+    || !!this.aliases[task]
+}
+
+Container.prototype.undefine = function (task) {
+  this.thisValues()[task] = undefined
+  this.thisTasks()[task] = undefined
+  this.thisAliases()[task] = undefined
+}
+
 Container.prototype.set = function (name, val) {
   this.thisValues()[name] = val
   return this
@@ -56,17 +76,8 @@ Container.prototype.get = function (name) {
   if (this.aliases[name]) return this.get(this.aliases[name])
 }
 
-Container.prototype.importing = function () {
-  var imports = [].concat.apply([], [].slice.call(arguments))
-  for (var i = 0; i < imports.length; i++) {
-    this.thisImports()[imports[i]] = true
-  }
-  return this
-}
-
 Container.prototype.alias = function (from, to) {
-  this.thisValues()[from] = undefined
-  this.thisTasks()[from] = undefined
+  this.undefine(from)
   this.thisAliases()[from] = to
   return this
 }
@@ -96,8 +107,7 @@ Container.prototype.def = function (layer, task, deps, fn) {
 }
 
 Container.prototype._def = function (task, def) {
-  this.thisValues()[task] = undefined
-  this.thisAliases()[task] = undefined
+  this.undefine(task)
   this.thisTasks()[task] = def
 }
 
