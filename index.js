@@ -215,7 +215,7 @@ function evaluate (app, task, def, cb) {
     , callbacks
 
   function ondone (err, val) {
-    if (done) return
+    if (done) return printDoubleCallbackWarning(task, err)
     done = true
     if (err != null) {
       if (!(err instanceof Error)) {
@@ -303,6 +303,16 @@ function exec (app, def, deps, ondone) {
     return
   }
   if (def.sync) ondone(null, ret)
+}
+
+function printDoubleCallbackWarning (task, err) {
+  var msg = 'Callback for the task `' + task + '` was called two times'
+  if (err) {
+    msg += '\n'
+    msg += 'Perhaps it is happened due to exception in an eval callback'
+    msg += '\n' + String(err)
+  }
+  console.error(msg)
 }
 
 function forEachProp (obj, cb) {

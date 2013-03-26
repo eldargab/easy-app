@@ -551,6 +551,25 @@ describe('Container', function () {
         done()
       })
     })
+
+    it('Should prevent double callbacks', function () {
+      var cer = console.error
+      after(function () {
+        console.error = cer
+      })
+      var msg
+      console.error = function (s) {
+        msg = s
+      }
+      app.def('foo', function (done) {
+        done(null, 'foo')
+      }).eval('foo', function () {
+        throw new Error('Error in eval callback')
+      })
+      msg.should.match(/^Callback for the task `foo` was called two times/)
+      msg.should.match(/Perhaps it is happened due to exception in an eval callback/)
+      msg.should.match(/Error in eval callback/)
+    })
   })
 
   describe('.use(plugin)', function () {
