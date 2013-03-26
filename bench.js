@@ -28,7 +28,7 @@ app
 .def('bone', function (b, one) {
   return b + one
 })
-.def('computation', function (bone, two, ab, done) {
+.def('computation', function (bone, async, ab, done) {
   done(null, bone + async + ab)
 })
 
