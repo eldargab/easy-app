@@ -95,20 +95,21 @@ Container.prototype.def = function(layer, task, deps, fn) {
     deps = fn.deps || parseFnArgs(fn)
   }
 
-  this._def(task, {
+  this._def({
+    name: task,
+    namespace: '',
     fn: fn,
     deps: deps,
     sync: !~deps.indexOf('done'),
-    layer: layer || this._layer,
-    namespace: ''
+    layer: layer || this._layer
   })
 
   return this
 }
 
-Container.prototype._def = function(task, def) {
-  this.undefine(task)
-  this.thisTasks()[task] = def
+Container.prototype._def = function(t) {
+  this.undefine(t.name)
+  this.thisTasks()[t.name] = t
 }
 
 Container.prototype.at = function(layer, fn) {
@@ -136,7 +137,9 @@ Container.prototype.install = function(ns, app, aliases) {
   })
 
   forEachProp(app.tasks, function(name, t) {
-    self._def(nsconcat(ns, name), {
+    self._def({
+      name: nsconcat(ns, name),
+      namespace: nsconcat(ns, t.namespace),
       fn: t.fn,
       sync: t.sync,
       layer: t.layer,
@@ -144,8 +147,7 @@ Container.prototype.install = function(ns, app, aliases) {
         if (dep == 'done') return 'done'
         if (dep == 'eval') return 'eval'
         return nsconcat(ns, dep)
-      }),
-      namespace: nsconcat(ns, t.namespace),
+      })
     })
   })
 
@@ -202,20 +204,21 @@ Container.prototype.eval = function(task, cb) {
   var ondone = this['_ondone_' + task]
   if (ondone) return ondone(cb)
 
-  var def = this.tasks[task]
-  if (!def) return cb(new Error('Task ' + task + ' is not defined'))
+  var t = this.tasks[task]
+  if (!t) return cb(new Error('Task ' + task + ' is not defined'))
 
-  evaluate(this, task, def, cb)
+  evaluate(this, t, cb)
 }
 
-function evaluate(app, task, def, cb) {
-  if (def.layer) app = find(app, def.layer)
+function evaluate(app, t, cb) {
+  if (t.layer) app = find(app, t.layer)
 
   var done = false
     , callbacks
+    , name = t.name
 
   function ondone(err, val) {
-    if (done) return printDoubleCallbackWarning(task, err)
+    if (done) return printDoubleCallbackWarning(name, err)
     done = true
     if (err != null) {
       if (!(err instanceof Error)) {
@@ -223,12 +226,12 @@ function evaluate(app, task, def, cb) {
         err = new Error('None error object was throwed')
         err.orig = orig
       }
-      err.task = err.task || task
+      err.task = err.task || t.name
       val = err
     }
     if (val === undefined) val = null
-    app.thisValues()[task] = val
-    app['_ondone_' + task] = null // cleanup
+    app.thisValues()[name] = val
+    app['_ondone_' + name] = null // cleanup
     cb(err, val)
     if (callbacks) {
       for (var i = 0; i < callbacks.length; i++) {
@@ -237,10 +240,10 @@ function evaluate(app, task, def, cb) {
     }
   }
 
-  evalWithDeps(app, def, new Array(def.deps.length), 0, ondone)
+  evalWithDeps(app, t, new Array(t.deps.length), 0, ondone)
 
   if (!done) {
-    app['_ondone_' + task] = function(fn) {
+    app['_ondone_' + name] = function(fn) {
       (callbacks || (callbacks = [])).push(fn)
     }
   }
@@ -254,10 +257,10 @@ function find(app, layer) {
   return app.name == layer ? app : top
 }
 
-function evalWithDeps(app, def, deps, start, ondone) {
+function evalWithDeps(app, t, deps, start, ondone) {
   var sync = true
-  for (var i = start; i < def.deps.length; i++) {
-    var dep = def.deps[i]
+  for (var i = start; i < t.deps.length; i++) {
+    var dep = t.deps[i]
 
     if (dep == 'done') {
       deps[i] = ondone
@@ -266,7 +269,7 @@ function evalWithDeps(app, def, deps, start, ondone) {
 
     if (dep == 'eval') {
       deps[i] = function(task, fn) {
-        task = nsconcat(def.namespace, task)
+        task = nsconcat(t.namespace, task)
         app.eval(task, fn)
       }
       continue
@@ -286,23 +289,23 @@ function evalWithDeps(app, def, deps, start, ondone) {
       done = true
       deps[i] = val
       if (sync) return
-      evalWithDeps(app, def, deps, i, ondone)
+      evalWithDeps(app, t, deps, i, ondone)
     })
     sync = done
     if (!sync) return
   }
-  exec(app, def, deps, ondone)
+  exec(app, t, deps, ondone)
 }
 
-function exec(app, def, deps, ondone) {
+function exec(app, t, deps, ondone) {
   var ret
   try {
-    ret = def.fn.apply(app, deps)
+    ret = t.fn.apply(app, deps)
   } catch (e) {
     ondone(e)
     return
   }
-  if (def.sync) ondone(null, ret)
+  if (t.sync) ondone(null, ret)
 }
 
 function printDoubleCallbackWarning(task, err) {
