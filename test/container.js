@@ -4,57 +4,57 @@ var Container = require('..')
 var nssuffix = Container.nssuffix
 var nsconcat = Container.nsconcat
 
-describe('Container', function () {
+describe('Container', function() {
  var app, log
 
-  beforeEach(function () {
+  beforeEach(function() {
     app = new Container
     log = Log()
   })
 
-  describe('.eval(task, [cb])', function () {
-    it('Should evaluate task', function (done) {
-      app.def('foo', function () {
+  describe('.eval(task, [cb])', function() {
+    it('Should evaluate task', function(done) {
+      app.def('foo', function() {
         return 'bar'
       })
-      app.eval('foo', function (err, val) {
+      app.eval('foo', function(err, val) {
         val.should.equal('bar')
         done()
       })
     })
 
-    it('Should treat task with <done> argument as async', function (done) {
+    it('Should treat task with <done> argument as async', function(done) {
       var end
-      app.def('foo', function (done) {
+      app.def('foo', function(done) {
         end = done
       })
-      app.eval('foo', function (err, val) {
+      app.eval('foo', function(err, val) {
         val.should.equal('ok')
         done()
       })
       end(null, 'ok')
     })
 
-    it('Should evaluate all task dependencies before evaluating task itself', function () {
+    it('Should evaluate all task dependencies before evaluating task itself', function() {
       var b_end, c_end, d_end
 
       app
-        .def('a', function (b, c, d) {
+        .def('a', function(b, c, d) {
           log('a')
         })
-        .def('b', function (c, done) {
+        .def('b', function(c, done) {
           log('b')
           b_end = done
         })
-        .def('c', function (done) {
+        .def('c', function(done) {
           log('c')
           c_end = done
         })
-        .def('d', function (done) {
+        .def('d', function(done) {
           log('d')
           d_end = done
         })
-        .eval('a', function () {
+        .eval('a', function() {
           log('done')
         })
 
@@ -67,15 +67,15 @@ describe('Container', function () {
       log.should.equal('c b d a done')
     })
 
-    it('Should pass task arguments', function (done) {
+    it('Should pass task arguments', function(done) {
       app
-        .def('foo', function () {
+        .def('foo', function() {
           return 'foo'
         })
-        .def('bar', function () {
+        .def('bar', function() {
           return 'bar'
         })
-        .def('foobar', function (foo, bar) {
+        .def('foobar', function(foo, bar) {
           foo.should.equal('foo')
           bar.should.equal('bar')
           done()
@@ -83,15 +83,15 @@ describe('Container', function () {
         .eval('foobar')
     })
 
-    it('Should call task with <this> set to <app>', function (done) {
-      app.def('foo', function () {
+    it('Should call task with <this> set to <app>', function(done) {
+      app.def('foo', function() {
         this.should.equal(app)
         done()
       }).eval('foo')
     })
 
-    it('Should not evaluate task twice', function () {
-      app.def('foo', function () {
+    it('Should not evaluate task twice', function() {
+      app.def('foo', function() {
         log('foo')
       })
       app.eval('foo')
@@ -101,9 +101,9 @@ describe('Container', function () {
     })
   })
 
-  describe('.get(task)', function () {
-    it('Should return task value', function () {
-      app.def('a', function () {
+  describe('.get(task)', function() {
+    it('Should return task value', function() {
+      app.def('a', function() {
         return 'b'
       })
       should.not.exist(app.get('a'))
@@ -112,17 +112,17 @@ describe('Container', function () {
     })
   })
 
-  describe('.set(task, val)', function () {
-    it('Should set task value', function () {
+  describe('.set(task, val)', function() {
+    it('Should set task value', function() {
       app.set('a', 'b').get('a').should.equal('b')
     })
 
-    it('Should have precedence over aliases', function (done) {
+    it('Should have precedence over aliases', function(done) {
       app.set('b', 'b')
       app.alias('a', 'b')
       app.set('a', 'a')
       app.get('a').should.equal('a')
-      app.eval('a', function (err, a) {
+      app.eval('a', function(err, a) {
         a.should.equal('a')
         app.set('a', undefined)
         app.get('a').should.equal('b')
@@ -130,22 +130,22 @@ describe('Container', function () {
       })
     })
 
-    it('Should have precedence over task definitions', function (done) {
-      app.def('a', function () {
+    it('Should have precedence over task definitions', function(done) {
+      app.def('a', function() {
         return 'b'
       })
       app.set('a', 'a')
       app.get('a').should.equal('a')
-      app.eval('a', function (err, a) {
+      app.eval('a', function(err, a) {
         a.should.equal('a')
         done()
       })
     })
   })
 
-  describe('.def()', function () {
-    it('Should clobber previous values', function () {
-      app.set('foo', 'bar').def('foo', function () {
+  describe('.def()', function() {
+    it('Should clobber previous values', function() {
+      app.set('foo', 'bar').def('foo', function() {
         return 'qux'
       })
       should.not.exist(app.get('foo'))
@@ -153,24 +153,24 @@ describe('Container', function () {
       app.get('foo').should.equal('qux')
     })
 
-    it('Should clobber previous aliases', function (done) {
+    it('Should clobber previous aliases', function(done) {
       app.set('b', 'b')
       app.alias('a', 'b')
-      app.def('a', function () {
+      app.def('a', function() {
         return 'a'
       })
       should.not.exist(app.get('a'))
-      app.eval('a', function (err, val) {
+      app.eval('a', function(err, val) {
         val.should.equal('a')
         done()
       })
     })
   })
 
-  describe('.defined(task)', function () {
-    it('Should return true if task is defined', function () {
+  describe('.defined(task)', function() {
+    it('Should return true if task is defined', function() {
       app.set('foo', null)
-      app.def('bar', function () {})
+      app.def('bar', function() {})
       app.alias('baz', 'foo')
 
       app.defined('foo').should.be.true
@@ -178,15 +178,15 @@ describe('Container', function () {
       app.defined('baz').should.be.true
     })
 
-    it('Should return false otherwise', function () {
+    it('Should return false otherwise', function() {
       app.defined('baz').should.be.false
     })
   })
 
-  describe('.undefine(task)', function () {
-    it('Should delete task definition', function () {
+  describe('.undefine(task)', function() {
+    it('Should delete task definition', function() {
       app.set('foo', 'foo')
-      app.def('bar', function () {})
+      app.def('bar', function() {})
       app.alias('baz', 'foo')
 
       app.undefine('foo')
@@ -199,63 +199,63 @@ describe('Container', function () {
     })
   })
 
-  describe('Aliases', function () {
-    it('Should work with .get()', function () {
+  describe('Aliases', function() {
+    it('Should work with .get()', function() {
       app.alias('a_b_c', 'c')
       app.set('c', 'foo')
       app.get('a_b_c').should.equal('foo')
     })
 
-    it('Should work with .eval()', function (done) {
+    it('Should work with .eval()', function(done) {
       app.alias('a_b_c', 'c')
-      app.def('c', function () {
+      app.def('c', function() {
         return 'foo'
-      }).eval('a_b_c', function (err, val) {
+      }).eval('a_b_c', function(err, val) {
         val.should.equal('foo')
         done()
       })
     })
 
-    it('Should clobber previous values', function (done) {
+    it('Should clobber previous values', function(done) {
       app.set('a', 'a')
       app.set('b', 'b')
       app.alias('a', 'b')
       app.get('a').should.equal('b')
-      app.eval('a', function (err, val) {
+      app.eval('a', function(err, val) {
         val.should.equal('b')
         done()
       })
     })
 
-    it('Should clobber previous task definitions', function (done) {
-      app.def('a', function () {
+    it('Should clobber previous task definitions', function(done) {
+      app.def('a', function() {
         return 'a'
       })
       app.set('b', 'b')
       app.alias('a', 'b')
       app.get('a').should.equal('b')
-      app.eval('a', function (err, val) {
+      app.eval('a', function(err, val) {
         val.should.equal('b')
         done()
       })
     })
 
-    describe('nesting', function () {
-      beforeEach(function () {
+    describe('nesting', function() {
+      beforeEach(function() {
         app.alias('a_b_c', 'a_c')
         app.alias('a_c', 'c')
       })
 
-      it('Should work with .get()', function () {
+      it('Should work with .get()', function() {
         app.set('c', 'foo')
         app.get('a_b_c').should.equal('foo')
       })
 
-      it('Should work with .eval()', function (done) {
-        app.def('c', function () {
+      it('Should work with .eval()', function(done) {
+        app.def('c', function() {
           return 'foo'
         })
-        app.eval('a_b_c', function (err, val) {
+        app.eval('a_b_c', function(err, val) {
           val.should.equal('foo')
           done()
         })
@@ -263,19 +263,19 @@ describe('Container', function () {
     })
   })
 
-  describe('Layers', function () {
-    it('Task should be bound to its layer', function () {
+  describe('Layers', function() {
+    it('Task should be bound to its layer', function() {
       app
         .layer('app')
-        .def('app', 'setup', function () {
+        .def('app', 'setup', function() {
           this.should.equal(app)
           return 'setup'
         })
-        .def('request', 'user', function () {
+        .def('request', 'user', function() {
           this.should.equal(req)
           return 'user'
         })
-        .def('response', function (user, setup) {
+        .def('response', function(user, setup) {
           return user + setup
         })
 
@@ -293,10 +293,10 @@ describe('Container', function () {
     })
   })
 
-  describe('.at(layer, fn)', function () {
-    it('Should bound all tasks to <layer>', function () {
-      app.at('app', function (app) {
-        app.def('foo', function () {
+  describe('.at(layer, fn)', function() {
+    it('Should bound all tasks to <layer>', function() {
+      app.at('app', function(app) {
+        app.def('foo', function() {
           return 'foo'
         })
       })
@@ -305,9 +305,9 @@ describe('Container', function () {
       app.get('foo').should.equal('foo')
     })
 
-    it('Should not clobber layer specified explicitly', function () {
-      app.at('app', function (app) {
-        app.def('req', 'foo', function () {
+    it('Should not clobber layer specified explicitly', function() {
+      app.at('app', function(app) {
+        app.def('req', 'foo', function() {
           return 'foo'
         })
       })
@@ -318,14 +318,14 @@ describe('Container', function () {
       req.get('foo').should.equal('foo')
     })
 
-    it('Should support nesting', function () {
-      app.at('app', function (app) {
-        app.at('req', function (app) {
-          app.def('req', function (env) {
+    it('Should support nesting', function() {
+      app.at('app', function(app) {
+        app.at('req', function(app) {
+          app.def('req', function(env) {
             return 'req'
           })
         })
-        app.def('env', function () {
+        app.def('env', function() {
           return 'env'
         })
       })
@@ -336,18 +336,18 @@ describe('Container', function () {
       app.get('env').should.equal('env')
     })
 
-    it('Should return <this>', function () {
-      app.at('foo', function () {}).should.equal(app)
+    it('Should return <this>', function() {
+      app.at('foo', function() {}).should.equal(app)
     })
   })
 
-  describe('.install(namespace, app, aliases)', function () {
-    it('Should install <app> at <namespace>', function () {
+  describe('.install(namespace, app, aliases)', function() {
+    it('Should install <app> at <namespace>', function() {
       var subapp = new Container()
-        .def('barbaz', function (bar, baz, done) {
+        .def('barbaz', function(bar, baz, done) {
           done(null, bar + baz) // should not clobber done() dependency
         })
-        .def('bar', function () {
+        .def('bar', function() {
           return 'bar'
         })
         .set('baz', 'baz')
@@ -358,12 +358,12 @@ describe('Container', function () {
       app.get('super_barbaz').should.equal('barbaz')
     })
 
-    it('Should allow to just mix subapp, without namespacing', function () {
+    it('Should allow to just mix subapp, without namespacing', function() {
       var subapp = new Container()
-        .def('barbaz', function (bar, baz) {
+        .def('barbaz', function(bar, baz) {
           return bar + baz
         })
-        .def('bar', function () {
+        .def('bar', function() {
           return 'bar'
         })
         .set('baz', 'baz')
@@ -374,13 +374,13 @@ describe('Container', function () {
       app.get('barbaz').should.equal('barbaz')
     })
 
-    it('Should allow (null, app) signature', function () {
+    it('Should allow (null, app) signature', function() {
       var subapp = Container().set('foo', 'foo')
       app.install(null, subapp)
       app.get('foo').should.equal('foo')
     })
 
-    it('Should preserve aliases', function () {
+    it('Should preserve aliases', function() {
       var subapp = new Container()
         .alias('a', 'b')
         .set('b', 10)
@@ -388,12 +388,12 @@ describe('Container', function () {
       app.get('asd_a').should.equal(10)
     })
 
-    it('Should setup passed aliases', function () {
+    it('Should setup passed aliases', function() {
       var subapp = new Container()
-        .def('barbaz', function (bar, baz) {
+        .def('barbaz', function(bar, baz) {
           return bar + baz
         })
-        .def('bar', function () {
+        .def('bar', function() {
           return 'bar'
         })
 
@@ -407,33 +407,33 @@ describe('Container', function () {
       app.get('super_barbaz').should.equal('barbaz')
     })
 
-    it('Should auto alias undefined imports', function (done) {
+    it('Should auto alias undefined imports', function(done) {
       var subapp = Container()
         .importing('foo')
-        .def('foobar', function (foo) {
+        .def('foobar', function(foo) {
           return foo + 'bar'
         })
       app
       .install('super', subapp)
       .set('foo', 'foo')
-      .eval('super_foobar', function (err, val) {
+      .eval('super_foobar', function(err, val) {
         val.should.equal('foobar')
         done()
       })
     })
 
-    it('Should not auto alias on mixing', function () {
+    it('Should not auto alias on mixing', function() {
       var subapp = Container().importing('foo')
       app.install(subapp)
       should.not.exist(app.aliases.foo)
     })
 
-    it('Should preserve layers', function () {
+    it('Should preserve layers', function() {
       var subapp = new Container()
-        .def('app','bar', function () {
+        .def('app','bar', function() {
           return 'bar'
         })
-        .def('baz', function (bar) {
+        .def('baz', function(bar) {
           return bar + baz
         })
 
@@ -450,8 +450,8 @@ describe('Container', function () {
     })
   })
 
-  describe('.importing()', function () {
-    it('Should populate .imports hash with passed tasks', function () {
+  describe('.importing()', function() {
+    it('Should populate .imports hash with passed tasks', function() {
       app.importing('t1', ['t2', 't3'])
       var imports = []
       for (var key in app.imports) {
@@ -461,51 +461,51 @@ describe('Container', function () {
       app.imports.t1.should.be.true
     })
 
-    it('Should not clobber prototype', function () {
+    it('Should not clobber prototype', function() {
       app.run().importing('foo')
       should.not.exist(app.imports.foo)
     })
   })
 
-  describe('eval() within task', function () {
-    it('Should evaluate tasks', function (done) {
-      app.def('bar', function () {
+  describe('eval() within task', function() {
+    it('Should evaluate tasks', function(done) {
+      app.def('bar', function() {
         return 'foo'
       })
-      .def('baz', function (eval, done) {
+      .def('baz', function(eval, done) {
         eval('bar', done)
       })
-      .eval('baz', function (err, val) {
+      .eval('baz', function(err, val) {
         if (err) return done(err)
         val.should.equal('foo')
         done()
       })
     })
 
-    it('Should work within subapp', function (done) {
+    it('Should work within subapp', function(done) {
       var subapp = Container()
-        .def('bar', function () {
+        .def('bar', function() {
           return 'foo'
         })
-        .def('baz', function (eval, done) {
+        .def('baz', function(eval, done) {
           eval('bar', done)
         })
 
       app.install('qux', subapp)
 
-      app.eval('qux_baz', function (err, val) {
+      app.eval('qux_baz', function(err, val) {
         if (err) return done(err)
         val.should.equal('foo')
         done()
       })
     })
 
-    it('Should work within deep subapp', function (done) {
+    it('Should work within deep subapp', function(done) {
       var deep = Container()
-        .def('bar', function () {
+        .def('bar', function() {
           return 'foo'
         })
-        .def('baz', function (eval, done) {
+        .def('baz', function(eval, done) {
           eval('bar', done)
         })
 
@@ -513,7 +513,7 @@ describe('Container', function () {
 
       app.install('hi', subapp)
 
-      app.eval('hi_qux_baz', function (err, val) {
+      app.eval('hi_qux_baz', function(err, val) {
         if (err) return done(err)
         val.should.equal('foo')
         done()
@@ -521,49 +521,49 @@ describe('Container', function () {
       })
   })
 
-  describe('Error handling', function () {
-    it('Should catch task exceptions', function (done) {
-      app.def('error', function () {
+  describe('Error handling', function() {
+    it('Should catch task exceptions', function(done) {
+      app.def('error', function() {
         throw new Error('hello')
-      }).eval('error', function (err) {
+      }).eval('error', function(err) {
         err.message.should.equal('hello')
         done()
       })
     })
 
-    it('Should set .task property of error to the name of throwed task', function (done) {
-      app.def('bug', function () {
+    it('Should set .task property of error to the name of throwed task', function(done) {
+      app.def('bug', function() {
         throw new Error('Ups')
-      }).def('task', function (bug) {
+      }).def('task', function(bug) {
         return bug
-      }).eval('task', function (err) {
+      }).eval('task', function(err) {
         err.task.should.equal('bug')
         done()
       })
     })
 
-    it('Should wrap non-error exceptions', function (done) {
-      app.def('foo', function () {
+    it('Should wrap non-error exceptions', function(done) {
+      app.def('foo', function() {
         throw 'foo'
-      }).eval('foo', function (err) {
+      }).eval('foo', function(err) {
         err.should.be.an.instanceof(Error)
         err.orig.should.equal('foo')
         done()
       })
     })
 
-    it('Should prevent double callbacks', function () {
+    it('Should prevent double callbacks', function() {
       var cer = console.error
-      after(function () {
+      after(function() {
         console.error = cer
       })
       var msg
-      console.error = function (s) {
+      console.error = function(s) {
         msg = s
       }
-      app.def('foo', function (done) {
+      app.def('foo', function(done) {
         done(null, 'foo')
-      }).eval('foo', function () {
+      }).eval('foo', function() {
         throw new Error('Error in eval callback')
       })
       msg.should.match(/^Callback for the task `foo` was called two times/)
@@ -572,42 +572,42 @@ describe('Container', function () {
     })
   })
 
-  describe('.use(plugin)', function () {
-    it('Should call plugin with <app> passed in a first arg', function (done) {
-      app.use(function (_app) {
+  describe('.use(plugin)', function() {
+    it('Should call plugin with <app> passed in a first arg', function(done) {
+      app.use(function(_app) {
         _app.should.equal(app)
         done()
       })
     })
-    it('Should pass arguments to the plugin', function (done) {
-      app.use(function (app, first, second) {
+    it('Should pass arguments to the plugin', function(done) {
+      app.use(function(app, first, second) {
         first.should.equal('first')
         second.should.equal('second')
         done()
       }, 'first', 'second')
     })
-    it('Should return <app>', function () {
-      app.use(function () { }).should.equal(app)
+    it('Should return <app>', function() {
+      app.use(function() { }).should.equal(app)
     })
   })
 
-  describe('nssuffix', function () {
-    it('ns, ns_task -> task', function () {
+  describe('nssuffix', function() {
+    it('ns, ns_task -> task', function() {
       nssuffix('ns', 'ns_task').should.equal('task')
     })
-    it('ns1, ns2_task -> ns2_task', function () {
+    it('ns1, ns2_task -> ns2_task', function() {
       nssuffix('ns1', 'ns2_task').should.equal('ns2_task')
     })
   })
 
-  describe('nsconcat', function () {
-    it('ns, task -> ns_task', function () {
+  describe('nsconcat', function() {
+    it('ns, task -> ns_task', function() {
       nsconcat('ns', 'task').should.equal('ns_task')
     })
-    it('null, task -> task', function () {
+    it('null, task -> task', function() {
       nsconcat('', 'task').should.equal('task')
     })
-    it('ns, null -> ns', function () {
+    it('ns, null -> ns', function() {
       nsconcat('ns', '').should.equal('ns')
     })
   })

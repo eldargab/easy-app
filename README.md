@@ -13,11 +13,11 @@ var app = App()
 
 app.set('bar', 10)
 
-app.def('baz', function (bar) {
+app.def('baz', function(bar) {
   return bar * 2
 })
 
-app.def('foo', function (bar, baz) {
+app.def('foo', function(bar, baz) {
   return bar + baz
 })
 ```
@@ -26,7 +26,7 @@ The `.def` method defines what is called task. Once the task and all it's
 dependencies were defined we can evaluate it:
 
 ```javascript
-app.eval('foo', function (err, foo) {
+app.eval('foo', function(err, foo) {
   foo.should.equal(30)
 })
 ```
@@ -34,7 +34,7 @@ app.eval('foo', function (err, foo) {
 Task may be async
 
 ```javascript
-app.def('config', function (done) {
+app.def('config', function(done) {
   fs.readFile('config', done)
 })
 ```
@@ -43,7 +43,7 @@ So `done` is a special case name meaning node style callback.
 You can also define dependencies explicitly:
 
 ```javascript
-app.def('foo', ['bar', 'baz'], function (bar, baz) {
+app.def('foo', ['bar', 'baz'], function(bar, baz) {
   return bar + baz
 })
 ```
@@ -60,7 +60,7 @@ var subapp = App() // subapp is a normal app
 // define tasks as usual
 // Note that we are using short names like `req`.
 // Not http_request, approval_request, etc
-subapp.def('req', function (bar, baz) {})
+subapp.def('req', function(bar, baz) {})
 
 // Specify missing tasks.
 subapp.importing(
@@ -78,7 +78,7 @@ The above operation just copies everything from subapp to global container with
 all names been prefixed with `super_`. So our `req` task turned into
 
 ```javascript
-app.def('super_req', ['super_bar', 'super_baz'], function (bar, baz) {})
+app.def('super_req', ['super_bar', 'super_baz'], function(bar, baz) {})
 ```
 
 After (or before) installation we supposed to define missing `super_bar` and
@@ -111,24 +111,24 @@ applications they are typically "app" and "request". That's how we do that:
 
 ```javascript
 app.layer('app') // mark current instance to be app level
-app.at('app', function () {
-  app.def('config', function (done) {
+app.at('app', function() {
+  app.def('config', function(done) {
     readJson('config.json', done)
   })
-  app.def('db', function (config) {
+  app.def('db', function(config) {
     return require('monk')(config.connection_string)
   })
 })
-app.at('request', function () {
-  app.def('session', function (db, req, done) {
+app.at('request', function() {
+  app.def('session', function(db, req, done) {
     db.loadSession(req.cookie.session, done)
   })
-  app.def('user', function (db, session, done) {
+  app.def('user', function(db, session, done) {
     db.loadUser(session.username, done)
   })
 })
 // ...
-http.createServer(function (req, res) {
+http.createServer(function(req, res) {
   app
   .run() // create next level instance
   .layer('request')
@@ -144,7 +144,7 @@ above example.
 Another way to attach task to a certain level is:
 
 ```javascript
-app.def('level', 'task', function (a, b) {})
+app.def('level', 'task', function(a, b) {})
 ```
 
 ## Misc
@@ -168,7 +168,7 @@ as expected.
 app
 .def('bar', bar)
 .def('baz', baz)
-.def('exec', function (task, eval, done) {
+.def('exec', function(task, eval, done) {
   eval(task, done)
 })
 app.run().set('task', 'bar').eval('exec') // bar executed
@@ -184,7 +184,7 @@ global
 Useful for plugins
 
 ```javascript
-app.use(function plugin (container, param) {
+app.use(function plugin(container, param) {
   container.should.equal(app)
   this.should.equal(app)
   param.should.equal(10)
