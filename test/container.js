@@ -23,7 +23,7 @@ describe('Container', function() {
       })
     })
 
-    it('Should treat task with <done> argument as async', function(done) {
+    it('Should treat task with `done` argument as async', function(done) {
       var end
       app.def('foo', function(done) {
         end = done
@@ -83,7 +83,7 @@ describe('Container', function() {
         .eval('foobar')
     })
 
-    it('Should call task with <this> set to <app>', function(done) {
+    it('Should call task with `this` set to `app`', function(done) {
       app.def('foo', function() {
         this.should.equal(app)
         done()
@@ -294,7 +294,7 @@ describe('Container', function() {
   })
 
   describe('.at(layer, fn)', function() {
-    it('Should bound all tasks to <layer>', function() {
+    it('Should bound all tasks to `layer`', function() {
       app.at('app', function(app) {
         app.def('foo', function() {
           return 'foo'
@@ -336,13 +336,13 @@ describe('Container', function() {
       app.get('env').should.equal('env')
     })
 
-    it('Should return <this>', function() {
+    it('Should return `this`', function() {
       app.at('foo', function() {}).should.equal(app)
     })
   })
 
   describe('.install(namespace, app, aliases)', function() {
-    it('Should install <app> at <namespace>', function() {
+    it('Should install `app` at `namespace`', function() {
       var subapp = new Container()
         .def('barbaz', function(bar, baz, done) {
           done(null, bar + baz) // should not clobber done() dependency
@@ -605,7 +605,7 @@ describe('Container', function() {
   })
 
   describe('.use(plugin)', function() {
-    it('Should call plugin with <app> passed in a first arg', function(done) {
+    it('Should call plugin with `app` passed in a first arg', function(done) {
       app.use(function(_app) {
         _app.should.equal(app)
         done()
@@ -618,7 +618,7 @@ describe('Container', function() {
         done()
       }, 'first', 'second')
     })
-    it('Should return <app>', function() {
+    it('Should return `app`', function() {
       app.use(function() { }).should.equal(app)
     })
   })
