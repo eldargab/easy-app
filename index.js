@@ -28,29 +28,25 @@ function defThis(name, obj) {
 defThis('values', Container.prototype)
 defThis('tasks', Container.prototype)
 defThis('aliases', Container.prototype)
-
-Container.prototype.imports = createImports(null, Container.prototype)
-
-// since .imports hash is public we want .__owner to be unenumerated property
-function createImports(proto, owner) {
-  return Object.create(proto, {
-    __owner: {
-      value: owner
-    }
-  })
-}
-
-Container.prototype.thisImports = function() {
-  if (this.imports.__owner === this) return this.imports
-  return this.imports = createImports(this.thisImports.call(this.__proto__), this)
-}
+defThis('_imports', Container.prototype)
 
 Container.prototype.importing = function() {
   var imports = [].concat.apply([], [].slice.call(arguments))
   for (var i = 0; i < imports.length; i++) {
-    this.thisImports()[imports[i]] = true
+    this.this_imports()[imports[i]] = true
   }
   return this
+}
+
+Container.prototype.imports = function(task) {
+  if (arguments.length == 1)
+    return !!this._imports[task]
+
+  var ret = []
+  forEachProp(this._imports, function (imp) {
+    ret.push(imp)
+  })
+  return ret
 }
 
 Container.prototype.defined = function(task) {
@@ -162,11 +158,10 @@ Container.prototype.install = function(ns, app, aliases) {
   })
 
   if (ns) {
-    for (var imp in app.imports) {
+    app.imports().forEach(function(imp) {
       var from = nsconcat(ns, imp)
-      if (!this.defined(from))
-        this.alias(from, imp)
-    }
+      if (!self.defined(from)) self.alias(from, imp)
+    })
   }
 
   return this

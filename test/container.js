@@ -450,20 +450,35 @@ describe('Container', function() {
     })
   })
 
+  describe('.imports()', function() {
+    describe('Given a task name', function() {
+      it('Should return true if the app imports this task', function() {
+        app.importing('foo')
+        app.imports('foo').should.be.true
+      })
+
+      it('Should return false otherwise', function() {
+        app.imports('foo').should.be.false
+      })
+    })
+
+    describe('Given no arguments', function() {
+      it('Should return an array of imports', function() {
+        app.importing('a', 'b', 'c')
+        app.imports(['a', 'b', 'c'])
+      })
+    })
+  })
+
   describe('.importing()', function() {
-    it('Should populate .imports hash with passed tasks', function() {
+    it('Should register passed tasks as imports', function() {
       app.importing('t1', ['t2', 't3'])
-      var imports = []
-      for (var key in app.imports) {
-        imports.push(key)
-      }
-      imports.should.eql(['t1', 't2', 't3'])
-      app.imports.t1.should.be.true
+      app.imports().should.eql(['t1', 't2', 't3'])
     })
 
     it('Should not clobber prototype', function() {
       app.run().importing('foo')
-      should.not.exist(app.imports.foo)
+      app.imports('foo').should.be.false
     })
   })
 
