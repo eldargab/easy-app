@@ -1,4 +1,5 @@
 var parseFnArgs = require('parse-fn-args')
+var Emitter = require('hooks-emitter')
 
 exports = module.exports = Container
 
@@ -7,6 +8,8 @@ function Container() {
     return new Container
   }
 }
+
+Emitter(Container.prototype)
 
 Container.prototype.use = function(plugin) {
   var fn = plugin
@@ -156,6 +159,8 @@ Container.prototype.install = function(ns, app, aliases) {
   forEachProp(aliases, function(from, to) {
     self.alias(nsconcat(ns, from), to)
   })
+
+  this.emit('subapp', ns, app)
 
   if (ns) {
     app.imports().forEach(function(imp) {
