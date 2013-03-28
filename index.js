@@ -226,7 +226,10 @@ function evaluate(app, t, cb) {
         err = new Error('None error object was throwed')
         err.orig = orig
       }
-      err.task = err.task || t.name
+      if (val != '__DEP__') {
+        err.task = name
+        err.layer = app.name
+      }
       val = err
     }
     if (val === undefined) val = null
@@ -277,7 +280,7 @@ function evalWithDeps(app, t, deps, start, ondone) {
 
     var val = app.values[dep]
     if (val !== undefined) {
-      if (val instanceof Error) return ondone(val)
+      if (val instanceof Error) return ondone(val, '__DEP__')
       deps[i] = val
       continue
     }
@@ -285,7 +288,7 @@ function evalWithDeps(app, t, deps, start, ondone) {
     var done = false
 
     app.eval(dep, function(err, val) {
-      if (err) return ondone(err)
+      if (err) return ondone(err, '__DEP__')
       done = true
       deps[i] = val
       if (sync) return

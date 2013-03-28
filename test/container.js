@@ -563,13 +563,37 @@ describe('Container', function() {
       })
     })
 
-    it('Should set .task property of error to the name of throwed task', function(done) {
+    it('Should set .task property to the name of throwed task', function(done) {
       app.def('bug', function() {
-        throw new Error('Ups')
+        var err = new Error('Ups')
+        err.task = 'foo'
+        throw err
       }).def('task', function(bug) {
         return bug
-      }).eval('task', function(err) {
+      }).def('task2', function(bug) {
+        return bug
+      })
+      .eval('task', function(err) {
         err.task.should.equal('bug')
+        app.eval('task2', function(err) {
+          err.task.should.equal('bug')
+          done()
+        })
+      })
+    })
+
+    it('Should set .layer property the name of the nearest named layer', function(done) {
+      app.layer('app')
+      app.def('bug', function() {
+        var err = new Error('Ups')
+        err.layer = 'foo'
+        throw err
+      }).def('task', function(bug) {
+        return bug
+      })
+      .run()
+      .eval('task', function(err) {
+        err.layer.should.equal('app')
         done()
       })
     })
