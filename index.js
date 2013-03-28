@@ -227,8 +227,8 @@ function evaluate(app, t, cb) {
         err.orig = orig
       }
       if (val != '__DEP__') {
-        err.task = name
-        err.layer = app.name
+        err._task = name
+        err._layer = app.name
       }
       val = err
     }

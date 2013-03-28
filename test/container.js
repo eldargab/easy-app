@@ -566,7 +566,7 @@ describe('Container', function() {
     it('Should set .task property to the name of throwed task', function(done) {
       app.def('bug', function() {
         var err = new Error('Ups')
-        err.task = 'foo'
+        err._task = 'foo'
         throw err
       }).def('task', function(bug) {
         return bug
@@ -574,9 +574,9 @@ describe('Container', function() {
         return bug
       })
       .eval('task', function(err) {
-        err.task.should.equal('bug')
+        err._task.should.equal('bug')
         app.eval('task2', function(err) {
-          err.task.should.equal('bug')
+          err._task.should.equal('bug')
           done()
         })
       })
@@ -586,14 +586,14 @@ describe('Container', function() {
       app.layer('app')
       app.def('bug', function() {
         var err = new Error('Ups')
-        err.layer = 'foo'
+        err._layer = 'foo'
         throw err
       }).def('task', function(bug) {
         return bug
       })
       .run()
       .eval('task', function(err) {
-        err.layer.should.equal('app')
+        err._layer.should.equal('app')
         done()
       })
     })

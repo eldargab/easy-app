@@ -151,8 +151,9 @@ app.def('level', 'task', function(a, b) {})
 
 ### Error handling
 
-All task errors both sync and async are catched. In addition `err.task`
-property is set to the name of task which throwed an error.
+All task errors both sync and async are catched. In addition `err._task`
+property is set to the name of the task which throwed an error and `err._layer` is set
+to the name of the nearest named layer.
 
 ### Control flow
 
