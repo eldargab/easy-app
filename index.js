@@ -272,8 +272,12 @@ function evalWithDeps(app, t, deps, start, ondone) {
 
     if (dep == 'eval') {
       deps[i] = function(task, fn) {
+        fn = fn || noop
         task = nsconcat(t.namespace, task)
-        app.eval(task, fn)
+        app.eval(task, function(err, val) {
+          if (err) val = '__DEP__'
+          fn(err, val)
+        })
       }
       continue
     }

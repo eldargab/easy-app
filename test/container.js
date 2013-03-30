@@ -582,6 +582,18 @@ describe('Container', function() {
       })
     })
 
+    it('Should set .task property to the name of throwed task in case delegation', function(done) {
+      app.def('bug', function() {
+        throw new Error('Ups')
+      }).def('dispatch', function(eval, done) {
+        eval('bug', done)
+      })
+      .eval('dispatch', function(err) {
+        err._task.should.equal('bug')
+        done()
+      })
+    })
+
     it('Should set .layer property the name of the nearest named layer', function(done) {
       app.layer('app')
       app.def('bug', function() {
