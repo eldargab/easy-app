@@ -1,14 +1,14 @@
 var should = require('should')
 var Log = require('test-log')
-var Container = require('..')
-var nssuffix = Container.nssuffix
-var nsconcat = Container.nsconcat
+var App = require('..')
+var nssuffix = App.nssuffix
+var nsconcat = App.nsconcat
 
-describe('Container', function() {
+describe('App', function() {
  var app, log
 
   beforeEach(function() {
-    app = new Container
+    app = new App
     log = Log()
   })
 
@@ -343,7 +343,7 @@ describe('Container', function() {
 
   describe('.install(namespace, app, aliases)', function() {
     it('Should install `app` at `namespace`', function() {
-      var subapp = new Container()
+      var subapp = new App()
         .def('barbaz', function(bar, baz, done) {
           done(null, bar + baz) // should not clobber done() dependency
         })
@@ -359,7 +359,7 @@ describe('Container', function() {
     })
 
     it('Should allow to just mix subapp, without namespacing', function() {
-      var subapp = new Container()
+      var subapp = new App()
         .def('barbaz', function(bar, baz) {
           return bar + baz
         })
@@ -375,13 +375,13 @@ describe('Container', function() {
     })
 
     it('Should allow (null, app) signature', function() {
-      var subapp = Container().set('foo', 'foo')
+      var subapp = App().set('foo', 'foo')
       app.install(null, subapp)
       app.get('foo').should.equal('foo')
     })
 
     it('Should preserve aliases', function() {
-      var subapp = new Container()
+      var subapp = new App()
         .alias('a', 'b')
         .set('b', 10)
       app.install('asd', subapp)
@@ -389,7 +389,7 @@ describe('Container', function() {
     })
 
     it('Should setup passed aliases', function() {
-      var subapp = new Container()
+      var subapp = new App()
         .def('barbaz', function(bar, baz) {
           return bar + baz
         })
@@ -408,7 +408,7 @@ describe('Container', function() {
     })
 
     it('Should auto alias undefined imports', function(done) {
-      var subapp = Container()
+      var subapp = App()
         .importing('foo')
         .def('foobar', function(foo) {
           return foo + 'bar'
@@ -423,13 +423,13 @@ describe('Container', function() {
     })
 
     it('Should not auto alias on mixing', function() {
-      var subapp = Container().importing('foo')
+      var subapp = App().importing('foo')
       app.install(subapp)
       should.not.exist(app.aliases.foo)
     })
 
     it('Should vall `.onsubapp()` after installation but before auto aliasing', function(done) {
-      var subapp = Container()
+      var subapp = App()
         .importing('foo')
         .set('qux', 'qux')
 
@@ -446,7 +446,7 @@ describe('Container', function() {
     })
 
     it('Should preserve layers', function() {
-      var subapp = new Container()
+      var subapp = new App()
         .def('app','bar', function() {
           return 'bar'
         })
@@ -515,7 +515,7 @@ describe('Container', function() {
     })
 
     it('Should work within subapp', function(done) {
-      var subapp = Container()
+      var subapp = App()
         .def('bar', function() {
           return 'foo'
         })
@@ -533,7 +533,7 @@ describe('Container', function() {
     })
 
     it('Should work within deep subapp', function(done) {
-      var deep = Container()
+      var deep = App()
         .def('bar', function() {
           return 'foo'
         })
@@ -541,7 +541,7 @@ describe('Container', function() {
           eval('bar', done)
         })
 
-      var subapp = Container().install('qux', deep)
+      var subapp = App().install('qux', deep)
 
       app.install('hi', subapp)
 
@@ -563,7 +563,7 @@ describe('Container', function() {
       })
     })
 
-    it('Should set .task property to the name of throwed task', function(done) {
+    it('Should set `._task` property to the name of throwed task', function(done) {
       app.def('bug', function() {
         var err = new Error('Ups')
         err._task = 'foo'
@@ -582,7 +582,7 @@ describe('Container', function() {
       })
     })
 
-    it('Should set .task property to the name of throwed task in case delegation', function(done) {
+    it('Should set `._task` property to the name of throwed task in case of delegation', function(done) {
       app.def('bug', function() {
         throw new Error('Ups')
       }).def('dispatch', function(eval, done) {
@@ -594,7 +594,7 @@ describe('Container', function() {
       })
     })
 
-    it('Should set .layer property the name of the nearest named layer', function(done) {
+    it('Should set `._layer` property the name of the nearest named layer', function(done) {
       app.layer('app')
       app.def('bug', function() {
         var err = new Error('Ups')
@@ -605,6 +605,25 @@ describe('Container', function() {
       })
       .run()
       .eval('task', function(err) {
+        err._layer.should.equal('app')
+        done()
+      })
+    })
+
+    it('Should set `._layer` and `._task` in case of app\'s nesting', function(done) {
+      var app2 = App()
+      app2.layer('foo')
+      app2.def('bug', function() {
+        throw new Error('Bug!')
+      })
+
+      app.layer('app')
+      app.def('task', function(done) {
+        app2.eval('bug', done)
+      })
+
+      app.eval('task', function(err) {
+        err._task.should.equal('task')
         err._layer.should.equal('app')
         done()
       })
