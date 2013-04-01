@@ -350,7 +350,7 @@ function nsconcat(ns, task) {
 function nssuffix(ns, task) {
   if (!ns) return task
   if (!task) return task
-  if (task.indexOf(ns + '_') != 0) return task
+  if (task.indexOf(ns + '_') != 0) return null
   return task.slice(ns.length + 1)
 }
 
