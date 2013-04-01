@@ -108,7 +108,12 @@ Container.prototype.def = function(layer, task, deps, fn) {
 
 Container.prototype._def = function(t) {
   this.undefine(t.name)
+  this.ontask(t)
   this.thisTasks()[t.name] = t
+}
+
+Container.prototype.ontask = function(t) {
+
 }
 
 Container.prototype.at = function(layer, fn) {
@@ -160,7 +165,7 @@ Container.prototype.install = function(ns, app, aliases) {
     self.alias(nsconcat(ns, from), to)
   })
 
-  this.emit('subapp', ns, app)
+  this.onsubapp(ns, app)
 
   if (ns) {
     app.imports().forEach(function(imp) {
@@ -170,6 +175,10 @@ Container.prototype.install = function(ns, app, aliases) {
   }
 
   return this
+}
+
+Container.prototype.onsubapp = function(ns, app) {
+
 }
 
 Container.prototype.layer = function(name) {

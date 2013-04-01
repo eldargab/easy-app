@@ -428,19 +428,19 @@ describe('Container', function() {
       should.not.exist(app.aliases.foo)
     })
 
-    it('Should emit `subapp` event after installation but before auto aliasing', function(done) {
+    it('Should vall `.onsubapp()` after installation but before auto aliasing', function(done) {
       var subapp = Container()
         .importing('foo')
         .set('qux', 'qux')
 
-      app.on('subapp', function(ns, sub) {
+      app.onsubapp = function(ns, sub) {
         sub.should.equal(subapp)
         ns.should.equal('ns')
         this.defined('ns_foo').should.be.false
         this.defined('ns_bar').should.be.true
         this.defined('ns_qux').should.be.true
         done()
-      })
+      }
 
       app.install('ns', subapp, {'bar': 'bar'})
     })

@@ -14,8 +14,7 @@
     "test": "mocha -R spec"
   },
   "dependencies": {
-    "parse-fn-args": "*",
-    "hooks-emitter": "*"
+    "parse-fn-args": "*"
   },
   "devDependencies": {
     "mocha": "*",
