@@ -1,5 +1,4 @@
 var parseFnArgs = require('parse-fn-args')
-var Emitter = require('hooks-emitter')
 
 exports = module.exports = Container
 
@@ -8,8 +7,6 @@ function Container() {
     return new Container
   }
 }
-
-Emitter(Container.prototype)
 
 Container.prototype.use = function(plugin) {
   var fn = plugin
