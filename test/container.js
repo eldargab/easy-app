@@ -682,8 +682,11 @@ describe('App', function() {
     it('ns, ns_task -> task', function() {
       nssuffix('ns', 'ns_task').should.equal('task')
     })
-    it('ns1, ns2_task -> ns2_task', function() {
-      nssuffix('ns1', 'ns2_task').should.equal('ns2_task')
+    it('ns1, ns2_task -> null', function() {
+      should.not.exist(nssuffix('ns1', 'ns2_task'))
+    })
+    it('null, task -> task', function() {
+      nssuffix('', 'task').should.equal('task')
     })
   })
 
