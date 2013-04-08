@@ -302,7 +302,7 @@ function evalWithDeps(app, t, deps, start, ondone) {
       done = true
       deps[i] = val
       if (sync) return
-      evalWithDeps(app, t, deps, i, ondone)
+      evalWithDeps(app, t, deps, i + 1, ondone)
     })
     sync = done
     if (!sync) return
