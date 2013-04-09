@@ -6,6 +6,7 @@ function Container() {
   if (!(this instanceof Container)) {
     return new Container
   }
+  this.promises = {}
 }
 
 Container.prototype.use = function(plugin) {
@@ -184,7 +185,10 @@ Container.prototype.layer = function(name) {
 }
 
 Container.prototype.run = function() {
-  return {__proto__: this}
+  return {
+    __proto__: this,
+    promises: {}
+  }
 }
 
 Container.prototype.eval = function(task, cb) {
@@ -207,7 +211,7 @@ Container.prototype.eval = function(task, cb) {
     return
   }
 
-  var ondone = this['_ondone_' + task]
+  var ondone = this.promises[task]
   if (ondone) return ondone(cb)
 
   var t = this.tasks[task]
@@ -240,7 +244,7 @@ function evaluate(app, t, cb) {
     }
     if (val === undefined) val = null
     app.thisValues()[name] = val
-    app['_ondone_' + name] = null // cleanup
+    app.promises[name] = null // cleanup
     cb(err, val)
     if (callbacks) {
       for (var i = 0; i < callbacks.length; i++) {
@@ -252,7 +256,7 @@ function evaluate(app, t, cb) {
   evalWithDeps(app, t, new Array(t.deps.length), 0, ondone)
 
   if (!done) {
-    app['_ondone_' + name] = function(fn) {
+    app.promises[name] = function(fn) {
       (callbacks || (callbacks = [])).push(fn)
     }
   }
