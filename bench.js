@@ -1,6 +1,8 @@
 var Bench = require('benchmark')
 var app = require('./index')()
 
+Bench.support.timeout = false
+
 app
 .set('one', 1)
 .set('two', 2)
@@ -23,13 +25,21 @@ app
   return a + b
 })
 .def('async', function(two, done) {
+  setImmediate(function() {
+    done(null, two)
+  })
+})
+.def('sync', function(two, done) {
   done(null, two)
 })
 .def('bone', function(b, one) {
   return b + one
 })
-.def('computation', function(bone, async, ab, done) {
-  done(null, bone + async + ab)
+.def('computation', function(bone, sync, ab, done) {
+    done(null, bone + sync + ab)
+})
+.def('async computation', function(bone, async, ab, done) {
+    done(null, bone + async + ab)
 })
 
 function noop() {}
@@ -47,6 +57,22 @@ suite.add('5 deps', function() {
 
 suite.add('computation', function() {
   app.run().eval('computation', noop)
+})
+
+suite.add('async computation', function(deferred) {
+  app.run().eval('async computation', function(err, val) {
+    deferred.resolve()
+  })
+}, {
+  defer: true
+})
+
+suite.add('setImmediate()', function(deferred) {
+  setImmediate(function() {
+    deferred.resolve()
+  })
+}, {
+  defer: true
 })
 
 suite.on('cycle', function(ev, bench) {
