@@ -6,7 +6,6 @@ function Container() {
   if (!(this instanceof Container)) {
     return new Container
   }
-  this.promises = {}
 }
 
 Container.prototype.use = function(plugin) {
@@ -26,10 +25,29 @@ function defThis(name, obj) {
   }
 }
 
-defThis('values', Container.prototype)
 defThis('tasks', Container.prototype)
 defThis('aliases', Container.prototype)
 defThis('_imports', Container.prototype)
+
+// but write values and promises manually
+// because it gives us a light performance improvement
+Container.prototype.thisValues = function() {
+  if (this.values.__owner === this) return this.values
+  return this.values = {
+    __proto__: this.__proto__.thisValues(),
+    __owner: this
+  }
+}
+Container.prototype.values = {__owner: Container.prototype}
+
+Container.prototype.thisPromises = function() {
+  if (this.promises.__owner === this) return this.promises
+  return this.promises = {
+    __proto__: this.__proto__.thisPromises(),
+    __owner: this
+  }
+}
+Container.prototype.promises = {__owner: Container.prototype}
 
 Container.prototype.importing = function() {
   var imports = [].concat.apply([], [].slice.call(arguments))
@@ -185,10 +203,7 @@ Container.prototype.layer = function(name) {
 }
 
 Container.prototype.run = function() {
-  return {
-    __proto__: this,
-    promises: {}
-  }
+  return { __proto__: this }
 }
 
 Container.prototype.eval = function(task, cb) {
@@ -202,9 +217,10 @@ Container.prototype.eval = function(task, cb) {
     return
   }
 
-  if (this.aliases[task]) {
+  var alias = this.aliases[task]
+  if (alias) {
     var self = this
-    this.eval(this.aliases[task], function(err, val) {
+    this.eval(alias, function(err, val) {
       self.thisTasks()[task] = err || val
       cb(err, val)
     })
@@ -243,9 +259,15 @@ function evaluate(app, t, cb) {
       val = err
     }
     if (val === undefined) val = null
+
     app.thisValues()[name] = val
-    app.promises[name] = null // cleanup
+
+    if (app.promises.__owner === app) {
+      app.promises[name] = null // cleanup
+    }
+
     cb(err, val)
+
     if (callbacks) {
       for (var i = 0; i < callbacks.length; i++) {
         callbacks[i](err, val)
@@ -256,7 +278,7 @@ function evaluate(app, t, cb) {
   evalWithDeps(app, t, new Array(t.deps.length), 0, ondone)
 
   if (!done) {
-    app.promises[name] = function(fn) {
+    app.thisPromises()[name] = function(fn) {
       (callbacks || (callbacks = [])).push(fn)
     }
   }

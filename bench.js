@@ -1,8 +1,6 @@
 var Bench = require('benchmark')
 var app = require('./index')()
 
-Bench.support.timeout = false
-
 app
 .set('one', 1)
 .set('two', 2)
@@ -44,7 +42,6 @@ app
 
 function noop() {}
 
-
 var suite = new Bench.Suite
 
 suite.add('1 dep', function() {
@@ -59,21 +56,24 @@ suite.add('computation', function() {
   app.run().eval('computation', noop)
 })
 
-suite.add('async computation', function(deferred) {
-  app.run().eval('async computation', function(err, val) {
-    deferred.resolve()
-  })
-}, {
-  defer: true
-})
+// Comment for now, because it seems there is an issue with benchmark about
+// async tests
 
-suite.add('setImmediate()', function(deferred) {
-  setImmediate(function() {
-    deferred.resolve()
-  })
-}, {
-  defer: true
-})
+// suite.add('async computation', function(deferred) {
+//   app.run().eval('async computation', function(err, val) {
+//     deferred.resolve()
+//   })
+// }, {
+//   defer: true
+// })
+//
+// suite.add('setImmediate()', function(deferred) {
+//   setImmediate(function() {
+//     deferred.resolve()
+//   })
+// }, {
+//   defer: true
+// })
 
 suite.on('cycle', function(ev, bench) {
   console.log(String(ev.target))
