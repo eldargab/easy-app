@@ -99,6 +99,27 @@ describe('App', function() {
       app.eval('foo')
       log.should.equal('foo')
     })
+
+    it('Should support multiple simultaneous eval requests', function() {
+      var fooDone
+
+      app.def('foo', function(done) {
+        log('foo')
+        fooDone = done
+      })
+
+      app.eval('foo', function() {
+        log('first')
+      })
+
+      app.eval('foo', function() {
+        log('second')
+      })
+
+      fooDone()
+
+      log.should.equal('foo first second')
+    })
   })
 
   describe('.get(task)', function() {
