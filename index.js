@@ -123,8 +123,8 @@ Container.prototype.def = function(layer, task, deps, fn) {
 }
 
 Container.prototype._def = function(t) {
-  this.undefine(t.name)
   this.ontask(t)
+  this.undefine(t.name)
   this.thisTasks()[t.name] = t
 }
 
