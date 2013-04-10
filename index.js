@@ -227,8 +227,8 @@ Container.prototype.eval = function(task, cb) {
     return
   }
 
-  var ondone = this.promises[task]
-  if (ondone) return ondone(cb)
+  var promise = this.promises[task]
+  if (promise) return promise.ondone(cb)
 
   var t = this.tasks[task]
   if (!t) return cb(new Error('Task ' + task + ' is not defined'))
@@ -240,7 +240,7 @@ function evaluate(app, t, cb) {
   if (t.layer) app = find(app, t.layer)
 
   var done = false
-    , callbacks
+    , promise
     , name = t.name
 
   function ondone(err, val) {
@@ -268,19 +268,27 @@ function evaluate(app, t, cb) {
 
     cb(err, val)
 
-    if (callbacks) {
-      for (var i = 0; i < callbacks.length; i++) {
-        callbacks[i](err, val)
-      }
-    }
+    if (promise) promise.resolve(err, val)
   }
 
   evalWithDeps(app, t, new Array(t.deps.length), 0, ondone)
 
   if (!done) {
-    app.thisPromises()[name] = function(fn) {
-      (callbacks || (callbacks = [])).push(fn)
-    }
+    app.thisPromises()[name] = promise = new Promise
+  }
+}
+
+function Promise() { }
+
+Promise.prototype.ondone = function(cb) {
+  this.callbacks = this.callbacks || []
+  this.callbacks.push(cb)
+}
+
+Promise.prototype.resolve = function(err, val) {
+  if (!this.callbacks) return
+  for (var i = 0; i < this.callbacks.length; i++) {
+    this.callbacks[i](err, val)
   }
 }
 
