@@ -39,6 +39,9 @@ app
 .def('async computation', function(bone, async, ab, done) {
     done(null, bone + async + ab)
 })
+.def('eval', function(eval, done) {
+  eval('onedep', done)
+})
 
 function noop() {}
 
@@ -54,6 +57,10 @@ suite.add('5 deps', function() {
 
 suite.add('computation', function() {
   app.run().eval('computation', noop)
+})
+
+suite.add('eval', function() {
+  app.run().eval('eval', noop)
 })
 
 // Comment for now, because it seems there is an issue with benchmark about
