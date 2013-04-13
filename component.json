@@ -10,7 +10,7 @@
   },
   "scripts": [
     "index.js",
-    "lib/app.js",
+    "lib/container.js",
     "lib/util.js"
   ]
 }
