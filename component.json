@@ -9,6 +9,8 @@
     "eldargab/parse-fn-args": "*"
   },
   "scripts": [
-    "index.js"
+    "index.js",
+    "lib/app.js",
+    "lib/util.js"
   ]
 }
