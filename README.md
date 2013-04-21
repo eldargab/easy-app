@@ -189,7 +189,7 @@ global
 .eval('super_exec') // super_baz (i.e baz) executed
 ```
 
-## Doing things by convention
+### Doing things by convention
 
 Sometimes you want to do things that while accomplished with
 regular API require a lot of repetition. For example add security check for
