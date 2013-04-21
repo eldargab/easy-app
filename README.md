@@ -160,7 +160,7 @@ to the name of the nearest named layer.
 All tasks are executed sequentally one after another. Dependencies are evaluated
 from left to right. You can rely on that.
 
-It is convenient to specify pre-task things as a additional dependency. For example:
+It is convenient to specify pre-task things as an additional dependency. For example:
 
 ```javascript
 app.def('secretDocument', function(authorized, db) {
@@ -198,7 +198,7 @@ it's namespace, etc. Eventually `.ontask()`, `.onsubapp()` hooks will be
 provided for doing such sort of things, but now only `.onsubapp()` is ready.
 
 ```javascript
-// Hooks are just a methods, not an events
+// Hooks are just methods, not an events
 // .onsubapp() is called after subapp installation but before auto-aliasing
 app.onsubapp = function(ns, app) {
   // do your stuff here
