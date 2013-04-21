@@ -147,7 +147,7 @@ Another way to attach task to a certain level is:
 app.def('level', 'task', function(a, b) {})
 ```
 
-## Misc
+## Notes
 
 ### Error handling
 
@@ -157,9 +157,18 @@ to the name of the nearest named layer.
 
 ### Control flow
 
-All tasks are executed sequentally one after another
+All tasks are executed sequentally one after another. Dependencies are evaluated
+from left to right. You can rely on that.
 
-### eval
+It is convenient to specify pre-task things as a additional dependency. For example:
+
+```javascript
+app.def('secretDocument', function(authorized, db) {
+  return db.getSecret()
+})
+```
+
+### Evaluation of arbitrary task from within task
 
 There is another special case dependency called `eval`. No surprise that it is
 similar to `app.eval()` but can be used within task and works for subapp case
@@ -180,6 +189,55 @@ global
 .eval('super_exec') // super_baz (i.e baz) executed
 ```
 
+## Doing things by convention
+
+Sometimes you want to do things that while accomplished with
+regular API require a lot of repetition. For example add security check for
+all tasks with a certain name pattern or define subapp dependency depending on
+it's namespace, etc. Eventually `.ontask()`, `.onsubapp()` hooks will be
+provided for doing such sort of things, but now only `.onsubapp()` is ready.
+
+```javascript
+// Hooks are just a methods, not an events
+// .onsubapp() is called after subapp installation but before auto-aliasing
+app.onsubapp = function(ns, app) {
+  // do your stuff here
+  // e.g
+  this.def(nsconcat(ns, 'foo'), createFoo(ns))
+}
+```
+
+In addition there is some reflection API you might find useful:
+
+```javascript
+app.importing('foo', 'bar')
+
+app.imports('foo') //=> true
+app.imports() //=> ['foo', 'bar']
+```
+
+```javascript
+app.set('foo', 'foo')
+app.alias('bar', 'foo')
+app.def('baz', baz)
+
+app.defined('foo') //=> true
+app.defined('bar') //=> true
+app.defined('baz') //=> true
+app.defined('qux') //=> false
+```
+
+```javascript
+var nsconcat = require('easy-app').nsconcat
+var nssuffix = require('easy-app').nssuffix
+
+nsconcat('hello', 'world') //=> 'hello_world'
+nsconcat('', 'world') //=> 'world'
+
+nssuffix('hello', 'hello_world') //=> 'world'
+nssuffix('foo', 'hello_world') //=> null
+```
+
 ### .use()
 
 Useful for plugins
@@ -196,22 +254,31 @@ app.use(function plugin(container, param) {
 
 via npm
 
-```shell
+```
 npm install easy-app
+```
+
+via component
+
+```
+component install eldargab/easy-app
 ```
 
 ## Related
 
-### Special thanks
+[make-flow](https://github.com/eldargab/make-flow) is an util with
+similar ideas but intended to be just a simple control flow util rather than a
+full blown container.
+
+[easy-web](https://github.com/eldargab/easy-web) is a new web framework under
+development on top of easy-app. Nearly ready but completely undocumented.
+Ping me if you seriously plan to use easy-app in that context and interested in
+some inspiration.
+
+## Special thanks
 
 This work intially inspired by
 [The-Kiln](https://github.com/straszheimjeffrey/The-Kiln)
-
-### make-flow
-
-[make-flow](https://github.com/eldargab/make-flow) is a util with
-similar ideas but intended to be just a simple control flow util rather than a
-full blown container.
 
 ## License
 
