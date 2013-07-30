@@ -1,4 +1,9 @@
 
+0.1.1 / 2013-07-30
+==================
+
+  * Make `None error object was throwed` message more informative
+
 0.1.0 / 2013-04-21
 ==================
 
