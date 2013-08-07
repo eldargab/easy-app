@@ -220,7 +220,7 @@ describe('App', function() {
     })
   })
 
-  describe('Aliases', function() {
+  xdescribe('Aliases', function() {
     it('Should work with .get()', function() {
       app.alias('a_b_c', 'c')
       app.set('c', 'foo')

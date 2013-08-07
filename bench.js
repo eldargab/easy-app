@@ -36,7 +36,7 @@ app
 .def('computation', function(bone, sync, ab, done) {
     done(null, bone + sync + ab)
 })
-.def('async computation', function(bone, async, ab, done) {
+.def('asyncComputation', function(bone, async, ab, done) {
     done(null, bone + async + ab)
 })
 .def('eval', function(eval, done) {
