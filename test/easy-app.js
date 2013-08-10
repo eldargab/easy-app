@@ -138,7 +138,7 @@ describe('App', function() {
       app.set('a', 'b').get('a').should.equal('b')
     })
 
-    it('Should have precedence over aliases', function(done) {
+    xit('Should have precedence over aliases', function(done) {
       app.set('b', 'b')
       app.alias('a', 'b')
       app.set('a', 'a')
@@ -174,7 +174,7 @@ describe('App', function() {
       app.get('foo').should.equal('qux')
     })
 
-    it('Should clobber previous aliases', function(done) {
+    xit('Should clobber previous aliases', function(done) {
       app.set('b', 'b')
       app.alias('a', 'b')
       app.def('a', function() {
@@ -362,7 +362,7 @@ describe('App', function() {
     })
   })
 
-  describe('.install(namespace, app, aliases)', function() {
+  xdescribe('.install(namespace, app, aliases)', function() {
     it('Should install `app` at `namespace`', function() {
       var subapp = new App()
         .def('barbaz', function(bar, baz, done) {
