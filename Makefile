@@ -1,7 +1,4 @@
 test:
-	@./node_modules/.bin/mocha
+	@./node_modules/.bin/mocha -R dot
 
-bench:
-	@node bench.js
-
-.PHONY: test bench
+.PHONY: test

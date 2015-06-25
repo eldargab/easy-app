@@ -1,25 +1,27 @@
 {
   "name": "easy-app",
   "version": "0.1.1",
-  "description": "Simple and powerful container for applications",
+  "description": "Powerful container for applications",
   "author": "Eldar Gabdullin <eldargab@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git://github.com/eldargab/easy-app"
   },
   "keywords": [
-    "dependency", "injection", "container"
+    "dependency",
+    "injection",
+    "container"
   ],
   "scripts": {
-    "test": "mocha -R spec"
+    "test": "mocha -R dot"
   },
   "dependencies": {
-    "parse-fn-args": "*"
+    "deepcopy": "^0.5.0",
+    "parse-fn-args": "0.0.2",
+    "go-async": "0.0.0"
   },
   "devDependencies": {
-    "mocha": "*",
-    "should": "*",
-    "test-log": "*",
-    "benchmark": "*"
+    "mocha": "^2.2.5",
+    "should": "^7.0.1"
   }
 }
