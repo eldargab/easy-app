@@ -79,8 +79,10 @@ RT.prototype.eval = function(name) {
   var self = this
 
   if (def.eval) return function(task) {
-    var name = add_namespace(def.ns, task)
-    return self.eval(name)
+    return go(function*() {
+      var name = add_namespace(def.ns, task)
+      return self.eval(name)
+    })
   }
 
   if (def.main) return function(obj) {
@@ -88,19 +90,13 @@ RT.prototype.eval = function(name) {
 
     var app = new RT(name, self, obj)
 
-    var ret = go(function*() {
+    return go(function*() {
       try {
         return (yield evaluate(app, name, def))
       } finally {
         app.close()
       }
     })
-
-    if (ret.ready) {
-      if (ret.error) throw ret.error
-      return ret.value
-    }
-    return ret
   }
 
   return evaluate(this, name, def)

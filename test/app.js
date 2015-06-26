@@ -66,9 +66,11 @@ describe('Easy app', function() {
       }
     })
 
-    app.def('main', function(request) {
-      request({path: 'a'}).should.equal('a A')
-      request({path: 'b'}).should.equal('b B')
+    app.def('main', function*(request) {
+      var a = yield request({path: 'a'})
+      var b = yield request({path: 'b'})
+      a.should.equal('a A')
+      b.should.equal('b B')
       count.should.equal(1)
       return 1
     })
