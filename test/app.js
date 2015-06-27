@@ -145,5 +145,20 @@ describe('Easy app', function() {
       })
       app.expect(1, done)
     })
+
+    it('dynamic eval', function(done) {
+      sub.set('a', 'a')
+      sub.def('A', {uses: ['a']}, function(eval) {
+        return eval('a')
+      })
+      app.install('sub', sub)
+      app.set('a', 1)
+      app.def('main', function(a, sub_A) {
+        a.should.equal(1)
+        sub_A.should.equal('a')
+        return 1
+      })
+      app.expect(1, done)
+    })
   })
 })

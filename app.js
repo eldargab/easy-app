@@ -58,7 +58,9 @@ App.prototype.install = function(ns, app) {
 
   function cpdeps(deps) {
     return deps.map(function(name) {
-      return app.defs[name] || seeds[name] ? add_namespace(ns, name) : name
+      return app.defs[name] || seeds[name] || 'eval' == remove_namespace(name)
+        ? add_namespace(ns, name)
+        : name
     })
   }
 
@@ -333,7 +335,7 @@ function traverse(defs, name, pre, post) {
     if (stack.indexOf(name) >= 0)
       throw new Error('Cycle detected involving ' + stack.join(', '))
 
-    if (name == 'eval' || /_eval$/.test(name)) {
+    if ('eval' == remove_namespace(name)) {
       // special eval function requested
       // need to define corresponding task
       defs[name] = {eval: true, ns: namespace(name)}
@@ -371,6 +373,10 @@ function namespace(name) {
   var segs = name.split('_')
   segs.pop()
   return segs.join('_')
+}
+
+function remove_namespace(name) {
+  return name.split('_').pop()
 }
 
 function isGenerator(fn) {
