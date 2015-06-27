@@ -1,8 +1,8 @@
 'use strict'
 
-var fnargs = require('parse-fn-args')
-var cp = require('deepcopy')
-var go = require('go-async')
+let fnargs = require('parse-fn-args')
+let cp = require('deepcopy')
+let go = require('go-async')
 
 exports = module.exports = App
 
@@ -31,7 +31,7 @@ App.prototype.set = function(name, val) {
 }
 
 App.prototype.level = function(name, seeds) {
-  var level = {seeds: {}}
+  let level = {seeds: {}}
   seeds.forEach(function(seed) {
     level.seeds[seed] = true
   })
@@ -45,7 +45,7 @@ App.prototype.install = function(ns, app) {
     ns = ''
   }
 
-  var seeds = {}
+  let seeds = {}
 
   for(let key in app.levels) {
     let level = cp(app.levels[key])
@@ -78,8 +78,8 @@ App.prototype.install = function(ns, app) {
 
 App.prototype.run = function(main) {
   main = main || 'main'
-  var opts = compile(this, main)
-  var app = new RT('app', opts, opts.values)
+  let opts = compile(this, main)
+  let app = new RT('app', opts, opts.values)
   return go(function*() {
     try {
       return (yield app.eval(main))
@@ -99,9 +99,9 @@ function RT(level, parent, values) {
 
 RT.prototype.close = function() {
   Object.keys(this.values).forEach(function(key) {
-    var val = this.values[key]
+    let val = this.values[key]
     if (val instanceof Future) return val.future.abort()
-    var close = this.defs[key].close
+    let close = this.defs[key].close
     if (close) {
       if (typeof close == 'function') {
         close(val)
@@ -116,30 +116,30 @@ RT.prototype.eval = function(name) {
   if (this.values[name] instanceof Error) throw this.values[name]
   if (this.values[name] !== undefined) return this.values[name]
 
-  var def = this.defs[name]
+  let def = this.defs[name]
   if (!def) throw new Error('Task ' + name + ' is not defined')
 
-  var self = this
+  let self = this
 
   if (def.eval) return function(task) {
     return go(function*() {
-      var name = add_namespace(def.ns, task)
+      let name = add_namespace(def.ns, task)
       return self.eval(name)
     })
   }
 
   if (def.main) return function(obj) {
     return go(function*() {
-      var level = self.levels[def.level]
-      var values = Object.create(self.values)
+      let level = self.levels[def.level]
+      let values = Object.create(self.values)
 
-      for(var seed in level.seeds) {
-        var val = obj[seed]
+      for(let seed in level.seeds) {
+        let val = obj[seed]
         if (val === undefined) throw new Error(seed + ' is required')
         values[add_namespace(level.ns, seed)] = val
       }
 
-      var app = new RT(name, self, values)
+      let app = new RT(name, self, values)
 
       try {
         return (yield evaluate(app, name, def))
@@ -166,16 +166,16 @@ function evaluate(app, name, def) {
         yield app.eval(x)
       }
     }
-    var deps = def.args || []
-    var fn = def.fn || function noop() {}
+    let deps = def.args || []
+    let fn = def.fn || function noop() {}
 
-    var args = new Array(deps.length)
+    let args = new Array(deps.length)
 
-    for(var i = 0; i < deps.length; i++) {
+    for(let i = 0; i < deps.length; i++) {
       args[i] = yield app.eval(deps[i])
     }
 
-    var ret = yield fn.apply(null, args)
+    let ret = yield fn.apply(null, args)
     return ret == null ? null : ret
   }))
 }
@@ -192,7 +192,7 @@ function set(app, name, f) {
     if (f.error) throw f.error
     return f.value
   }
-  var ret = new Future
+  let ret = new Future
   ret.future = f
   app.values[name] = ret
   f.get(function(err, val) {
@@ -214,10 +214,10 @@ Future.prototype.done = function(err, val) {
   this.ready = true
   this.error = err
   this.value = val
-  var cbs = this.cbs
+  let cbs = this.cbs
   if (!cbs) return
   this.cbs = null
-  for(var i = 0; i < cbs.length; i++) {
+  for(let i = 0; i < cbs.length; i++) {
     cbs[i](err, val)
   }
 }
@@ -231,9 +231,9 @@ Future.prototype.get = function(cb) {
 Future.prototype.abort = function() {}
 
 function compile(spec, main) {
-  var defs = cp(spec.defs)
-  var levels = cp(spec.levels)
-  var app = {values: {}, defs: defs, levels: levels}
+  let defs = cp(spec.defs)
+  let levels = cp(spec.levels)
+  let app = {values: {}, defs: defs, levels: levels}
 
   // process predefined values
   for(let name in defs) {
@@ -265,7 +265,7 @@ function compile(spec, main) {
     }
   }
 
-  var stack = ['app']
+  let stack = ['app']
 
   traverse(defs, main,
     function pre(name, def) {
@@ -277,13 +277,13 @@ function compile(spec, main) {
       }
     },
     function post(name, def) {
-      var deps = dependencies(def)
+      let deps = dependencies(def)
 
-      var depLevels = deps.map(function(dep) {
+      let depLevels = deps.map(function(dep) {
         return defs[dep]
       }).map(function(def, i) {
-        var level = def.main ? def.mainLevel : def.level
-        var idx = stack.indexOf(level)
+        let level = def.main ? def.mainLevel : def.level
+        let idx = stack.indexOf(level)
         if (idx < 0)
           throw new Error(
             'Task ' + name + ' uses task ' + deps[i] +
@@ -295,7 +295,7 @@ function compile(spec, main) {
         return b - a
       })
 
-      var depLevelIdx = depLevels[0] || 0
+      let depLevelIdx = depLevels[0] || 0
 
       if (def.level) {
         let idx = stack.indexOf(def.level)
@@ -326,8 +326,8 @@ function compile(spec, main) {
 }
 
 function traverse(defs, name, pre, post) {
-  var visited = {}
-  var stack = []
+  let visited = {}
+  let stack = []
 
   ;(function visit(name, parent) {
     if (visited[name]) return
@@ -341,7 +341,7 @@ function traverse(defs, name, pre, post) {
       defs[name] = {eval: true, ns: namespace(name)}
     }
 
-    var def = defs[name]
+    let def = defs[name]
 
     if (!def) {
       if (parent) throw new Error('Task ' + name + ' is used by ' + parent + ', but not defined')
@@ -370,7 +370,7 @@ function add_namespace(ns, name) {
 }
 
 function namespace(name) {
-  var segs = name.split('_')
+  let segs = name.split('_')
   segs.pop()
   return segs.join('_')
 }
@@ -384,9 +384,9 @@ function isGenerator(fn) {
 }
 
 function unique(arr) {
-  var ret = []
-  var pushed = {}
-  for(var x of arr) {
+  let ret = []
+  let pushed = {}
+  for(let x of arr) {
     if (pushed[x]) continue
     pushed[x] = true
     ret.push(x)
