@@ -77,4 +77,73 @@ describe('Easy app', function() {
 
     app.expect(1, done)
   })
+
+  it('Dynamic eval', function(done) {
+    app.def('a', function() {
+      return 'a'
+    })
+    app.def('b', function() {
+      return 'b'
+    })
+    app.def('main', {uses: ['a', 'b']}, function*(eval) {
+      var a = yield eval('a')
+      var b = yield eval('b')
+      a.should.equal('a')
+      b.should.equal('b')
+      return 1
+    })
+    app.expect(1, done)
+  })
+
+  describe('Subapp', function() {
+    var sub
+
+    beforeEach(function() {
+      sub = new App
+    })
+
+    it('mixing', function(done) {
+      app.set('a', 'a')
+      sub.def('ab', function(a) {
+        return a + 'b'
+      })
+      app.install(sub)
+      app.def('main', function(ab) {
+        ab.should.equal('ab')
+        return 1
+      })
+      app.expect(1, done)
+    })
+
+    it('namespacing', function(done) {
+      app.set('a', 1)
+      app.set('b', 2)
+
+      sub.level('request', ['req'])
+      sub.def('request', function(req) {
+        return req * 10
+      })
+      sub.def('response', function*(request, a, b) {
+        var res = yield request({req: 10})
+        return res + a + b
+      })
+
+      app.level('request', ['req'])
+      app.def('request', function(req) {
+        return req.toUpperCase()
+      })
+
+      app.install('sub', sub)
+
+      app.def('main', function*(sub_response, request, sub_request) {
+        var res = yield request({req: 'a'})
+        res.should.equal('A')
+        sub_response.should.equal(103)
+        var subres = yield sub_request({req: 5})
+        subres.should.equal(50)
+        return 1
+      })
+      app.expect(1, done)
+    })
+  })
 })

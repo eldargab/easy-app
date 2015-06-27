@@ -17,27 +17,67 @@ App.prototype.def = function(name, opts, fn) {
     opts = {}
   }
   opts = cp(opts || {})
-  opts.args = opts.args || fnargs(fn)
-  opts.fn = isGenerator(fn) ? go.fn(fn) : fn
+  if (fn) {
+    opts.args = opts.args || fnargs(fn)
+    opts.fn = isGenerator(fn) ? go.fn(fn) : fn
+  }
   this.defs[name] = opts
   return this
 }
 
 App.prototype.set = function(name, val) {
-  if (val === undefined) throw new Error('Undefined values are not supported')
   this.defs[name] = {value: val}
   return this
 }
 
 App.prototype.level = function(name, seeds) {
-  this.levels[name] = seeds
+  var level = {seeds: {}}
+  seeds.forEach(function(seed) {
+    level.seeds[seed] = true
+  })
+  this.levels[name] = level
+  return this
+}
+
+App.prototype.install = function(ns, app) {
+  if (arguments.length == 1) {
+    app = ns
+    ns = ''
+  }
+
+  var seeds = {}
+
+  for(let key in app.levels) {
+    let level = cp(app.levels[key])
+    let level_ns = namespace(key)
+    for(let seed in level.seeds) {
+      seeds[add_namespace(level_ns, seed)] = true
+    }
+    this.levels[add_namespace(ns, key)] = level
+  }
+
+  function cpdeps(deps) {
+    return deps.map(function(name) {
+      return app.defs[name] || seeds[name] ? add_namespace(ns, name) : name
+    })
+  }
+
+  for(let key in app.defs) {
+    let def = cp(app.defs[key])
+    if (def.uses) def.uses = cpdeps(def.uses)
+    if (def.pre) def.pre = cpdeps(def.pre)
+    if (def.args) def.args = cpdeps(def.args)
+    if (def.level && app.levels[def.level]) def.level = add_namespace(ns, def.level)
+    this.defs[add_namespace(ns, key)] = def
+  }
+
   return this
 }
 
 App.prototype.run = function(main) {
   main = main || 'main'
   var opts = compile(this, main)
-  var app = new RT('app', {defs: opts.defs}, opts.values)
+  var app = new RT('app', opts, opts.values)
   return go(function*() {
     try {
       return (yield app.eval(main))
@@ -51,6 +91,7 @@ function RT(level, parent, values) {
   this.level = level
   this.parent = parent
   this.defs = parent.defs
+  this.levels = parent.levels
   this.values = values
 }
 
@@ -86,11 +127,18 @@ RT.prototype.eval = function(name) {
   }
 
   if (def.main) return function(obj) {
-    obj.__proto__ = self.values // TODO: may be copy and check?
-
-    var app = new RT(name, self, obj)
-
     return go(function*() {
+      var level = self.levels[def.level]
+      var values = Object.create(self.values)
+
+      for(var seed in level.seeds) {
+        var val = obj[seed]
+        if (val === undefined) throw new Error(seed + ' is required')
+        values[add_namespace(level.ns, seed)] = val
+      }
+
+      var app = new RT(name, self, values)
+
       try {
         return (yield evaluate(app, name, def))
       } finally {
@@ -116,13 +164,16 @@ function evaluate(app, name, def) {
         yield app.eval(x)
       }
     }
-    var args = new Array(def.args.length)
+    var deps = def.args || []
+    var fn = def.fn || function noop() {}
 
-    for(var i = 0; i < def.args.length; i++) {
-      args[i] = yield app.eval(def.args[i])
+    var args = new Array(deps.length)
+
+    for(var i = 0; i < deps.length; i++) {
+      args[i] = yield app.eval(deps[i])
     }
 
-    var ret = yield def.fn.apply(null, args)
+    var ret = yield fn.apply(null, args)
     return ret == null ? null : ret
   }))
 }
@@ -185,19 +236,31 @@ function compile(spec, main) {
   // process predefined values
   for(let name in defs) {
     let def = defs[name]
-    if ('value' in def) {
-      app.values[name] = def.value
-      def.level = 'app'
-    }
+    if (!('value' in def)) continue
+    if (def.value === undefined)
+      throw new Error(name +
+        ' was set to undefined, but undefined values are not supported. Use null instead'
+      )
+    app.values[name] = def.value
+    def.level = 'app'
   }
 
-  // process seeds
-  for(let l in levels) {
-    levels[l].forEach(function(seed) {
-      if (defs[seed])
-        throw new Error(seed + ' is used as a seed value for ' + l + ', but was already defined')
-      defs[seed] = {level: l}
-    })
+  // process seeds & levels
+  for(let key in levels) {
+    let level = levels[key]
+    let ns = namespace(key)
+
+    level.ns = ns
+
+    for(let seed in level.seeds) {
+      seed = add_namespace(ns, seed)
+      if (defs[seed] && defs[seed].seed)
+        throw new Error(
+          seed + ' is used as a seed value for both ' + key +
+          ' and ' + defs[seed].level
+        )
+      defs[seed] = {level: key, seed: true}
+    }
   }
 
   var stack = ['app']
@@ -273,7 +336,7 @@ function traverse(defs, name, pre, post) {
     if (name == 'eval' || /_eval$/.test(name)) {
       // special eval function requested
       // need to define corresponding task
-      defs[name] = {eval: true, ns: namespace(dep, 'eval')}
+      defs[name] = {eval: true, ns: namespace(name)}
     }
 
     var def = defs[name]
@@ -304,8 +367,10 @@ function add_namespace(ns, name) {
   return ns + '_' + name
 }
 
-function namespace(fullname, name) {
-  return fullname.slice(0, fullname.length - name.length - 1)
+function namespace(name) {
+  var segs = name.split('_')
+  segs.pop()
+  return segs.join('_')
 }
 
 function isGenerator(fn) {
