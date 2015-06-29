@@ -161,4 +161,23 @@ describe('Easy app', function() {
       app.expect(1, done)
     })
   })
+
+  it('Coping', function(done) {
+    app.set('a', 'a')
+    app.def('A', function(a) {
+      return a.toUpperCase()
+    })
+    var app2 = app.copy()
+    app2.set('a', 'b')
+    app.def('A', function(a) {
+      return a
+    })
+    app.def('main', function*(A) {
+      A.should.equal('a')
+      var A2 = yield app2.run('A')
+      A2.should.equal('B')
+      return 1
+    })
+    app.expect(1, done)
+  })
 })

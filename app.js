@@ -76,6 +76,13 @@ App.prototype.install = function(ns, app) {
   return this
 }
 
+App.prototype.copy = function() {
+  var app = new this.constructor
+  app.defs = cp(this.defs)
+  app.levels = cp(this.levels)
+  return app
+}
+
 App.prototype.run = function(main) {
   main = main || 'main'
   let opts = compile(this, main)
