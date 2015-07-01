@@ -95,6 +95,24 @@ describe('Easy app', function() {
     app.expect(1, done)
   })
 
+  it('Lazy arguments', function(done) {
+    var called = false
+    app.def('a', function() {
+      called = true
+      return 'a'
+    })
+    app.def('main', function(a$) {
+      called.should.be.false
+      debugger
+      a$.get(function(err, a) {
+        a.should.equal('a')
+        called.should.be.true
+        done()
+      })
+    })
+    app.run()
+  })
+
   describe('Subapp', function() {
     var sub
 

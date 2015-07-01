@@ -18,7 +18,13 @@ App.prototype.def = function(name, opts, fn) {
   }
   opts = cp(opts || {})
   if (fn) {
-    opts.args = opts.args || fnargs(fn)
+    opts.args = opts.args || fnargs(fn).map(function(arg) {
+      if (!/\$$/.test(arg)) return arg
+      arg = arg.slice(0, arg.length - 1)
+      opts.lazy = opts.lazy || {}
+      opts.lazy[arg] = true
+      return arg
+    })
     opts.fn = isGenerator(fn) ? go.fn(fn) : fn
   }
   this.defs[name] = opts
@@ -120,6 +126,21 @@ RT.prototype.close = function() {
   }, this)
 }
 
+RT.prototype.lazyEval = function(name) {
+  let ret = new Future
+  let self = this
+  ret.get = function(cb) {
+    go(function*() {
+      return self.eval(name)
+    }).get(function(err, val) {
+      ret.done(err, val)
+    })
+    this.get = Future.prototype.get
+    this.get(cb)
+  }
+  return ret
+}
+
 RT.prototype.eval = function(name) {
   if (this.values[name] instanceof Error) throw this.values[name]
   if (this.values[name] !== undefined) return this.values[name]
@@ -180,7 +201,8 @@ function evaluate(app, name, def) {
     let args = new Array(deps.length)
 
     for(let i = 0; i < deps.length; i++) {
-      args[i] = yield app.eval(deps[i])
+      let dep = deps[i]
+      args[i] = def.lazy && def.lazy[dep] ? app.lazyEval(dep) : (yield app.eval(dep))
     }
 
     let ret = yield fn.apply(null, args)
