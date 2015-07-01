@@ -109,13 +109,14 @@ RT.prototype.close = function() {
     let val = this.values[key]
     if (val instanceof Future) return val.future.abort()
     let close = this.defs[key].close
-    if (close) {
+    if (!close) return
+    safecall(function() {
       if (typeof close == 'function') {
         close(val)
       } else {
         val.close()
       }
-    }
+    })
   }, this)
 }
 
@@ -225,7 +226,7 @@ Future.prototype.done = function(err, val) {
   if (!cbs) return
   this.cbs = null
   for(let i = 0; i < cbs.length; i++) {
-    cbs[i](err, val)
+    safecall(cbs[i], err, val)
   }
 }
 
@@ -399,4 +400,14 @@ function unique(arr) {
     ret.push(x)
   }
   return ret
+}
+
+function safecall(cb, err, val) {
+  try {
+    cb(err, val)
+  } catch(e) {
+    process.nextTick(function() {
+      throw e
+    })
+  }
 }
