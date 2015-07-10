@@ -85,9 +85,9 @@ describe('Easy app', function() {
     app.def('b', function() {
       return 'b'
     })
-    app.def('main', {uses: ['a', 'b']}, function*(eval) {
-      var a = yield eval('a')
-      var b = yield eval('b')
+    app.def('main', {uses: ['a', 'b']}, function*(evaluate) {
+      var a = yield evaluate('a')
+      var b = yield evaluate('b')
       a.should.equal('a')
       b.should.equal('b')
       return 1
@@ -166,8 +166,8 @@ describe('Easy app', function() {
 
     it('dynamic eval', function(done) {
       sub.set('a', 'a')
-      sub.def('A', {uses: ['a']}, function(eval) {
-        return eval('a')
+      sub.def('A', {uses: ['a']}, function(evaluate) {
+        return evaluate('a')
       })
       app.install('sub', sub)
       app.set('a', 1)

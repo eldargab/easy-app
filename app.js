@@ -64,7 +64,7 @@ App.prototype.install = function(ns, app) {
 
   function cpdeps(deps) {
     return deps.map(function(name) {
-      return app.defs[name] || seeds[name] || 'eval' == remove_namespace(name)
+      return app.defs[name] || seeds[name] || 'evaluate' == remove_namespace(name)
         ? add_namespace(ns, name)
         : name
     })
@@ -365,7 +365,7 @@ function traverse(defs, name, pre, post) {
     if (stack.indexOf(name) >= 0)
       throw new Error('Cycle detected involving ' + stack.join(', '))
 
-    if ('eval' == remove_namespace(name)) {
+    if ('evaluate' == remove_namespace(name)) {
       // special eval function requested
       // need to define corresponding task
       defs[name] = {eval: true, ns: namespace(name)}
