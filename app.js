@@ -141,7 +141,7 @@ RT.prototype.lazyEval = function(name) {
   return ret
 }
 
-RT.prototype.eval = function(name) {
+RT.prototype.eval = function(name, fromTask, uses) {
   if (this.values[name] instanceof Error) throw this.values[name]
   if (this.values[name] !== undefined) return this.values[name]
 
@@ -152,8 +152,11 @@ RT.prototype.eval = function(name) {
 
   if (def.eval) return function(task) {
     return go(function*() {
-      let name = add_namespace(def.ns, task)
-      return self.eval(name)
+      task = add_namespace(def.ns, task)
+      if (!uses[task])
+        throw new Error('Attempt to evaluate  `'
+          + task + "` from `" + fromTask + "`, while `" + task + "` is not listed as used")
+      return self.eval(task)
     })
   }
 
@@ -202,7 +205,7 @@ function evaluate(app, name, def) {
 
     for(let i = 0; i < deps.length; i++) {
       let dep = deps[i]
-      args[i] = def.lazy && def.lazy[dep] ? app.lazyEval(dep) : (yield app.eval(dep))
+      args[i] = def.lazy && def.lazy[dep] ? app.lazyEval(dep) : (yield app.eval(dep, name, def.uses))
     }
 
     let ret = yield fn.apply(null, args)
@@ -350,6 +353,8 @@ function compile(spec, main) {
 
         stack.pop()
       }
+
+      def.uses = toSet(def.uses || [])
     })
 
   return app
@@ -420,6 +425,14 @@ function unique(arr) {
     if (pushed[x]) continue
     pushed[x] = true
     ret.push(x)
+  }
+  return ret
+}
+
+function toSet(arr) {
+  let ret = {}
+  for(let x of arr) {
+    ret[x] = true
   }
   return ret
 }
