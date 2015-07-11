@@ -17,9 +17,9 @@
   },
   "main": "./app.js",
   "dependencies": {
-    "deepcopy": "^0.5.0",
+    "go-async": "0.0.0",
     "parse-fn-args": "0.0.2",
-    "go-async": "0.0.0"
+    "utils-copy": "^1.0.0"
   },
   "devDependencies": {
     "mocha": "^2.2.5",

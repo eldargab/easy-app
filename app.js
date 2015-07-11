@@ -1,7 +1,7 @@
 'use strict'
 
 let fnargs = require('parse-fn-args')
-let cp = require('deepcopy')
+let cp = require('utils-copy')
 let go = require('go-async')
 
 exports = module.exports = App
