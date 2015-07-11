@@ -15,6 +15,7 @@
   "scripts": {
     "test": "mocha -R dot"
   },
+  "main": "./app.js",
   "dependencies": {
     "deepcopy": "^0.5.0",
     "parse-fn-args": "0.0.2",
