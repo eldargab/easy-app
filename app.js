@@ -146,9 +146,12 @@ RT.prototype.eval = function(name, fromTask, uses) {
   if (this.values[name] !== undefined) return this.values[name]
 
   let def = this.defs[name]
-  if (!def) throw new Error('Task ' + name + ' is not defined')
+  if (!def) throw new Error('Task `' + name + '` is not defined')
 
   let self = this
+
+  if (def.eval && !fromTask)
+    throw new Error('Evaluate function may be requested only as a non-lazy task argument')
 
   if (def.eval) return function(task) {
     return go(function*() {
@@ -167,7 +170,7 @@ RT.prototype.eval = function(name, fromTask, uses) {
 
       for(let seed in level.seeds) {
         let val = obj[seed]
-        if (val === undefined) throw new Error(seed + ' is required')
+        if (val === undefined) throw new Error('`' + seed + '` is required')
         values[add_namespace(level.ns, seed)] = val
       }
 
@@ -188,8 +191,8 @@ function evaluate(app, name, def) {
   app = findLevel(app, def.level)
 
   if (!app) throw new Error(
-    "Can't evaluate task " + name + " from level " + def.level +
-    ", since " + def.level + " is not available"
+    "Can't evaluate task `" + name + "` from level `" + def.level +
+    "`, since `" + def.level + "` is not available"
   )
 
   return set(app, name, go(function*() {
@@ -273,8 +276,8 @@ function compile(spec, main) {
     let def = defs[name]
     if (!('value' in def)) continue
     if (def.value === undefined)
-      throw new Error(name +
-        ' was set to undefined, but undefined values are not supported. Use null instead'
+      throw new Error('`' + name +
+        '` was set to undefined, but undefined values are not supported. Use null instead'
       )
     app.values[name] = def.value
     def.level = 'app'
@@ -291,8 +294,8 @@ function compile(spec, main) {
       seed = add_namespace(ns, seed)
       if (defs[seed] && defs[seed].seed)
         throw new Error(
-          seed + ' is used as a seed value for both ' + key +
-          ' and ' + defs[seed].level
+          '`' + seed + '` is used as a seed value for both `' + key +
+          '` and `' + defs[seed].level + '`'
         )
       defs[seed] = {level: key, seed: true}
     }
@@ -319,9 +322,9 @@ function compile(spec, main) {
         let idx = stack.indexOf(level)
         if (idx < 0)
           throw new Error(
-            'Task ' + name + ' uses task ' + deps[i] +
-            ' from level ' + level + ', but at the moment of call '+
-            level + ' is not available'
+            'Task `' + name + '` uses task `' + deps[i] +
+            '` from level `' + level + '`, but at the moment of call `' +
+            level + '` is not available'
           )
         return idx
       }).sort(function(a, b) {
@@ -334,13 +337,13 @@ function compile(spec, main) {
         let idx = stack.indexOf(def.level)
         if (idx < 0)
           throw new Error(
-            'Task ' + name + ' was assigned to level ' + def.level +
-            ', but at the moment of call ' + def.level + ' is not available'
+            'Task `' + name + '` was assigned to level `' + def.level +
+            '`, but at the moment of call `' + def.level + '` is not available'
           )
         if (idx < depLevelIdx)
           throw new Error(
-            'Task ' + name + ' was assigned to level ' + def.level +
-            ', but dependecies require existance of ' + stack[depLevelIdx]
+            'Task `' + name + '` was assigned to level `' + def.level +
+            '`, but dependecies require existance of `' + stack[depLevelIdx] + '`'
           )
       } else {
         def.level = stack[depLevelIdx]
@@ -379,8 +382,8 @@ function traverse(defs, name, pre, post) {
     let def = defs[name]
 
     if (!def) {
-      if (parent) throw new Error('Task ' + name + ' is used by ' + parent + ', but not defined')
-      throw new Error('Task ' + name + ' is not defined')
+      if (parent) throw new Error('Task `' + name + '` is used by `' + parent + '`, but not defined')
+      throw new Error('Task `' + name + '` is not defined')
     }
 
     pre && pre(name, def)
