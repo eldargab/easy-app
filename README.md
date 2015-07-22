@@ -66,7 +66,7 @@ this level requires `req` as a seed value, and hence all tasks from this level
 can use it.
 
 Our request handling logic is as follows. First we match the http request against
-available routes (`route`) to determine the handler task,
+available routes to determine the handler task,
 then dynamically evaluate it to get the response, and since our serialization steps
 could be potentially complex, we put them into container as well and define yet another
 level.
@@ -102,7 +102,7 @@ app.def('cookies', function(req) {
 })
 ```
 
-App is ready, we are ready to run.
+and run it
 
 ```javascript
 app.def('main', function(server) {
@@ -112,7 +112,7 @@ app.def('main', function(server) {
 app.run()
 ```
 
-You see?
+That's it.
 
 ## Installation
 
