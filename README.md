@@ -1,59 +1,122 @@
 # easy-app
 
-Easy-app is based on the idea, that you can structure many computations as a list of
+Easy-app is based on the idea, that you can often structure computations as a list of
 interdependent tasks. It does essentially the same thing as build tools like
 `make`, `rake` and numerous IoC containers - abstracts away the
 problem of execution order and caching. However, there is a novel part as well.
+Unlike other IoC systems, it supports multiple runtime levels. This feature allows
+to compose the entire application as a plain list of (idempotent) functions.
+It's simple. Need a new feature? Don't think! Just throw a couple of functions.
 
-Unlike other IoC systems, it supports multiple runtime levels. That
-means, you can have, for example, a http handler, which can seamlessly and
-simultaneously request as a dependency `database` (app level),
-`parsed request body` (request level), `cookies` (request level), etc.
+# Example
 
-Here is an example.
+To illustrate above, lets show how one can implement JSON API for some
+social network.
+
+We start with app level settings
 
 ```javascript
 var App = require('easy-app')
 var app = new App
 
-app.set('a', 1)
+app.set('connectionString', process.env.DB_CONNECTION)
 
-app.set('b', 2)
-
-app.def('ab', function(a, b) {
-  return a + b
+app.def('db', function(connectionString) {
+  return open(connectionString)
 })
-
-app.def('d', function(c) {
-  return c
-})
-
-app.def('cd', function(c, d) {
-  return c + d
-})
-
-app.def('abcd', function(ab, cd) {
-  return ab + cd
-})
-
-app.level('abcd', ['c']) // mark `abcd` as a level with seed `c`
-
-app.def('main', function*(ab, abcd) {
-  console.log(ab)
-  console.log(yield abcd({c: 1}))
-  console.log(yield abcd({c: 2}))
-})
-
-app.run() // prints 3 lines (3, 5, 7)
 ```
+
+Since we are building http server, lets define one
+
+```javascript
+app.def('server', function(request) {
+  return http.createServer(function(req, res) {
+    request({req: req}).get(function(err, response) {
+      if (err) response = {status: 500}
+      res.writeHead(response.status, response.headers)
+      res.end(response.body)
+    })
+  })
+})
+```
+
+How is this `request` function is defined? Surprisingly, its just a regular task!
+
+```javascript
+app.def('request', function*(route, evaluate, response) {
+  try {
+    var res = yield evaluate(route.name)
+  } catch(e) {
+    if (!e.http) throw e
+    res = e
+  }
+  return response({res: res})
+})
+
+app.def('route', function(req) {
+  return router.match(req)
+})
+
+app.level('request', ['req'])
+```
+
+The last line `app.level('request', ['req'])` says, that the task `request` is
+an entry point (main function) of the similarly named level `request`, and that,
+this level requires `req` as a seed value, and hence all tasks from this level
+can use it.
+
+Our request handling logic is as follows. First we match the http request against
+available routes (the `route` task) to determine the handler (which is just another task!),
+then dynamically evaluate it to get the response and since our serialization steps
+could be potentially complex, we put them into container and define yet another
+level for them.
+
+```javascript
+app.level('response', 'res')
+
+app.def('response', function(req, res) {
+  // usual http stuff here
+})
+```
+
+Now, once we established a foundation, we can go ahead and just enjoy building the app.
+
+```javascript
+// HTTP: GET /friends
+app.def('friends', function(user, db) {
+  return db.getFriendsOf(user)
+})
+
+app.def('user', function(mayBeUser) {
+  if (mayBeUser) return mayBeUser
+  throw error(403) // respond with 403 Forbiden
+})
+
+app.def('mayBeUser', function(cookies, db) {
+  return cookies.auth && db.getUser(cookies.auth)
+})
+
+app.def('cookies', function(req) {
+  let cookies = req.headers['cookies']
+  return parse(cookies)
+})
+```
+
+App is ready, we are ready to run.
+
+```javascript
+app.def('main', function(server) {
+  server.listen(3000)
+})
+
+app.run()
+```
+
+You see?
 
 ## Installation
 
-via npm
-
-```
-npm install easy-app
-```
+Not yet released.
 
 ## Special thanks
 
