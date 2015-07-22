@@ -60,16 +60,16 @@ app.def('route', function(req) {
 app.level('request', ['req'])
 ```
 
-The last line `app.level('request', ['req'])` says, that the task `request` is
+The line `app.level('request', ['req'])` says, that the task `request` is
 an entry point (main function) of the similarly named level `request`, and that,
 this level requires `req` as a seed value, and hence all tasks from this level
 can use it.
 
 Our request handling logic is as follows. First we match the http request against
-available routes (the `route` task) to determine the handler (which is just another task!),
-then dynamically evaluate it to get the response and since our serialization steps
-could be potentially complex, we put them into container and define yet another
-level for them.
+available routes (`route`) to determine the handler task,
+then dynamically evaluate it to get the response, and since our serialization steps
+could be potentially complex, we put them into container as well and define yet another
+level.
 
 ```javascript
 app.level('response', 'res')
