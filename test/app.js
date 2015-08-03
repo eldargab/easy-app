@@ -103,7 +103,7 @@ describe('Easy app', function() {
     })
     app.def('main', function(a$) {
       called.should.be.false
-      a$.get(function(err, a) {
+      go.run(a$).get(function(err, a) {
         a.should.equal('a')
         called.should.be.true
         done()

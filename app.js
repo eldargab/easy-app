@@ -25,7 +25,7 @@ App.prototype.def = function(name, opts, fn) {
       opts.lazy[arg] = true
       return arg
     })
-    opts.fn = isGenerator(fn) ? go.fn(fn) : fn
+    opts.fn = fn
   }
   this.defs[name] = opts
   return this
@@ -113,7 +113,7 @@ function RT(level, parent, values) {
 RT.prototype.close = function() {
   Object.keys(this.values).forEach(function(key) {
     let val = this.values[key]
-    if (val instanceof Future) return val.future.abort()
+    if (val instanceof go.Future) return val.future.abort()
     let close = this.defs[key].close
     if (!close) return
     safecall(function() {
@@ -124,21 +124,6 @@ RT.prototype.close = function() {
       }
     })
   }, this)
-}
-
-RT.prototype.lazyEval = function(name) {
-  let ret = new Future
-  let self = this
-  ret.get = function(cb) {
-    go(function*() {
-      return self.eval(name)
-    }).get(function(err, val) {
-      ret.done(err, val)
-    })
-    this.get = Future.prototype.get
-    this.get(cb)
-  }
-  return ret
 }
 
 RT.prototype.eval = function(name, fromTask, uses) {
@@ -153,38 +138,38 @@ RT.prototype.eval = function(name, fromTask, uses) {
   if (def.eval && !fromTask)
     throw new Error('Evaluate function may be requested only as a non-lazy task argument')
 
-  if (def.eval) return function(task) {
-    return go(function*() {
-      task = add_namespace(def.ns, task)
-      if (!uses[task])
-        throw new Error('Attempt to evaluate  `'
-          + task + "` from `" + fromTask + "`, while `" + task + "` is not listed as used")
-      return self.eval(task)
-    })
+  if (def.eval) return function*(task) {
+    task = add_namespace(def.ns, task)
+    if (!uses[task])
+      throw new Error('Attempt to evaluate  `'
+        + task + "` from `" + fromTask + "`, while `" + task + "` is not listed as used")
+    return self.eval(task)
   }
 
-  if (def.main) return function(obj) {
-    return go(function*() {
-      let level = self.levels[def.level]
-      let values = Object.create(self.values)
+  if (def.main) return function*(obj) {
+    let level = self.levels[def.level]
+    let values = Object.create(self.values)
 
-      for(let seed in level.seeds) {
-        let val = obj[seed]
-        if (val === undefined) throw new Error('`' + seed + '` is required')
-        values[add_namespace(level.ns, seed)] = val
-      }
+    for(let seed in level.seeds) {
+      let val = obj[seed]
+      if (val === undefined) throw new Error('`' + seed + '` is required')
+      values[add_namespace(level.ns, seed)] = val
+    }
 
-      let app = new RT(name, self, values)
+    let app = new RT(name, self, values)
 
-      try {
-        return (yield evaluate(app, name, def))
-      } finally {
-        app.close()
-      }
-    })
+    try {
+      return (yield evaluate(app, name, def))
+    } finally {
+      app.close()
+    }
   }
 
   return evaluate(this, name, def)
+}
+
+RT.prototype.lazyEval = function*(name) {
+  return this.eval(name)
 }
 
 function evaluate(app, name, def) {
@@ -228,7 +213,7 @@ function set(app, name, f) {
     if (f.error) throw f.error
     return f.value
   }
-  let ret = new Future
+  let ret = new go.Future
   ret.future = f
   app.values[name] = ret
   f.get(function(err, val) {
@@ -237,34 +222,6 @@ function set(app, name, f) {
   })
   return ret
 }
-
-function Future() {
-  this.ready = false
-  this.aborted = false
-}
-
-Future.prototype.__proto__ = go.Future.prototype
-
-Future.prototype.done = function(err, val) {
-  if (this.aborted || this.ready) return
-  this.ready = true
-  this.error = err
-  this.value = val
-  let cbs = this.cbs
-  if (!cbs) return
-  this.cbs = null
-  for(let i = 0; i < cbs.length; i++) {
-    safecall(cbs[i], err, val)
-  }
-}
-
-Future.prototype.get = function(cb) {
-  if (this.ready) return cb(this.error, this.value)
-  if (this.cbs) return this.cbs.push(cb)
-  this.cbs = [cb]
-}
-
-Future.prototype.abort = function() {}
 
 function compile(spec, main) {
   let defs = cp(spec.defs)
