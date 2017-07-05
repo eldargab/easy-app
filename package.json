@@ -15,11 +15,11 @@
   "scripts": {
     "test": "mocha -R dot"
   },
-  "main": "./app.js",
   "dependencies": {
-    "go-async": "0.0.0",
-    "parse-fn-args": "0.0.2",
-    "utils-copy": "^1.0.0"
+    "is-var-name": "^1.0.0",
+    "lodash.clonedeep": "^4.5.0",
+    "lodash.forown": "^4.4.0",
+    "parse-fn-args": "0.0.2"
   },
   "devDependencies": {
     "mocha": "^2.2.5",
