@@ -1,6 +1,6 @@
 var should = require('should')
-var App = require('../app')
-var go = require('go-async')
+var App = require('..')
+
 
 describe('Easy app', function() {
   var app
@@ -8,8 +8,10 @@ describe('Easy app', function() {
   beforeEach(function() {
     app = new App
 
+    app.level('Main', 'main')
+
     app.expect = function(val, done) {
-      app.run().get(function(err, ret) {
+      app.compile('Main')().get(function(err, ret) {
         if (err) return done(err)
         ret.should.equal(val)
         done()
@@ -47,11 +49,11 @@ describe('Easy app', function() {
   })
 
   it('Multiple levels', function(done) {
-    app.level('request', ['path'])
-    app.level('response', ['body'])
+    app.level('Request', 'request', ['path'])
+    app.level('Response', 'response', ['body'])
 
-    app.def('request', function(path, response) {
-      return response({body: path})
+    app.def('request', function(path, Response) {
+      return Response(path)
     })
 
     app.def('response', function(path, body, transform) {
@@ -66,9 +68,9 @@ describe('Easy app', function() {
       }
     })
 
-    app.def('main', function*(request) {
-      var a = yield request({path: 'a'})
-      var b = yield request({path: 'b'})
+    app.def('main', function*(Request) {
+      var a = yield Request('a')
+      var b = yield Request('b')
       a.should.equal('a A')
       b.should.equal('b B')
       count.should.equal(1)
@@ -78,7 +80,7 @@ describe('Easy app', function() {
     app.expect(1, done)
   })
 
-  it('Dynamic eval', function(done) {
+  xit('Dynamic eval', function(done) {
     app.def('a', function() {
       return 'a'
     })
@@ -112,7 +114,7 @@ describe('Easy app', function() {
     app.run()
   })
 
-  describe('Subapp', function() {
+  xdescribe('Subapp', function() {
     var sub
 
     beforeEach(function() {
@@ -177,24 +179,5 @@ describe('Easy app', function() {
       })
       app.expect(1, done)
     })
-  })
-
-  it('Coping', function(done) {
-    app.set('a', 'a')
-    app.def('A', function(a) {
-      return a.toUpperCase()
-    })
-    var app2 = app.copy()
-    app2.set('a', 'b')
-    app.def('A', function(a) {
-      return a
-    })
-    app.def('main', function*(A) {
-      A.should.equal('a')
-      var A2 = yield app2.run('A')
-      A2.should.equal('B')
-      return 1
-    })
-    app.expect(1, done)
   })
 })

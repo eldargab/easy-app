@@ -22,6 +22,7 @@
     "parse-fn-args": "0.0.2"
   },
   "devDependencies": {
+    "benchmark": "^2.1.4",
     "mocha": "^2.2.5",
     "should": "^7.0.1"
   }
