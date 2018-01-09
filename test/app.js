@@ -1,8 +1,9 @@
 var should = require('should')
+var go = require('go-async')
 var App = require('..')
 
 
-describe('Easy app', function() {
+describe('easy-app', function() {
   var app
 
   beforeEach(function() {
@@ -19,34 +20,44 @@ describe('Easy app', function() {
     }
   })
 
-  it('One layer', function(done) {
+
+  it('Basic', function(done) {
     app.set('a', 'a')
+
     app.def('ab', function(a) {
       return a + 'b'
     })
+
     app.def('abc', function(ab) {
       return ab + 'c'
     })
-    app.def('ababc', function(ab, abc) {
+
+    app.def('main', function(ab, abc) {
       return ab + abc
     })
-    app.def('main', function(ababc) {
-      ababc.should.equal('ababc')
-      return 1
-    })
-    app.expect(1, done)
+
+    app.expect('ababc', done)
   })
+
 
   it('Generator and async', function(done) {
     app.def('a', function*() {
       return Promise.resolve('a')
     })
-    app.def('main', function(a) {
-      a.should.equal('a')
-      return 1
+
+    app.def('b', () => Promise.resolve('b'))
+
+    app.def('c', function*() {
+      return 'c'
     })
-    app.expect(1, done)
+
+    app.def('main', function(a, b, c) {
+      return a + b + c
+    })
+
+    app.expect('abc', done)
   })
+
 
   it('Multiple levels', function(done) {
     app.level('Request', 'request', ['path'])
@@ -61,6 +72,7 @@ describe('Easy app', function() {
     })
 
     var count = 0
+
     app.def('transform', function() {
       count++
       return function(x) {
@@ -80,39 +92,48 @@ describe('Easy app', function() {
     app.expect(1, done)
   })
 
-  xit('Dynamic eval', function(done) {
-    app.def('a', function() {
-      return 'a'
+
+  describe('Dynamic eval', function() {
+    it('Basic dynamic call', function(done) {
+      let called_a = 0
+
+      app.def('a', function() {
+        called_a += 1
+        return 'a'
+      })
+
+      app.def('main', {uses: ['a']}, function(evaluate) {
+        called_a.should.equal(0)
+        var future = evaluate('a')
+        future.should.be.an.instanceOf(go.Future)
+        if (future.error) throw future.error
+        called_a.should.equal(1)
+        future.value.should.equal('a')
+        return 1
+      })
+
+      app.expect(1, done)
     })
-    app.def('b', function() {
-      return 'b'
+
+
+    it('Should throw on undeclared task', function(done) {
+      app.def('a', () => 'a')
+      app.def('b', () => 'b')
+
+      app.def('main', {uses: ['a']}, function(evaluate) {
+        try {
+          evaluate('b')
+          should.fail()
+        } catch(e) {
+          e.message.should.equal("'b' is not declared as a dependency of 'main'")
+        }
+        return 1
+      })
+
+      app.expect(1, done)
     })
-    app.def('main', {uses: ['a', 'b']}, function*(evaluate) {
-      var a = yield evaluate('a')
-      var b = yield evaluate('b')
-      a.should.equal('a')
-      b.should.equal('b')
-      return 1
-    })
-    app.expect(1, done)
   })
 
-  xit('Lazy arguments', function(done) {
-    var called = false
-    app.def('a', function() {
-      called = true
-      return 'a'
-    })
-    app.def('main', function(a$) {
-      called.should.be.false
-      go.run(a$).get(function(err, a) {
-        a.should.equal('a')
-        called.should.be.true
-        done()
-      })
-    })
-    app.run()
-  })
 
   xdescribe('Subapp', function() {
     var sub
