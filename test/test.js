@@ -205,7 +205,7 @@ describe('easy-app', function() {
         args: ['evaluate']
       })
 
-      app.def('main', (sub_dyn) => sub_dyn)
+      app.def('main', sub_dyn => sub_dyn)
 
       app.expect('abcd', done)
     })
