@@ -125,7 +125,7 @@ describe('easy-app', function() {
           evaluate('b')
           should.fail()
         } catch(e) {
-          e.message.should.equal("'b' is not declared as a dependency of 'main'")
+          e.message.should.equal("'b' is not declared as used from 'main'")
         }
         return 1
       })
@@ -135,70 +135,79 @@ describe('easy-app', function() {
   })
 
 
-  xdescribe('Subapp', function() {
-    var sub
-
-    beforeEach(function() {
-      sub = new App
-    })
-
-    it('mixing', function(done) {
-      app.set('a', 'a')
-      sub.def('ab', function(a) {
-        return a + 'b'
+  describe('Subapp', function() {
+    it('mixing with no namespace', function(done) {
+      let sub = new App
+      sub.set('a', 'a')
+      sub.set('b', 'b')
+      sub.def('ab', function(a, b) {
+        return a + b
       })
-      app.install(sub)
+
+      app.set('b', 'B')
       app.def('main', function(ab) {
         ab.should.equal('ab')
         return 1
       })
+
+      app.install(sub)
+
       app.expect(1, done)
     })
+
 
     it('namespacing', function(done) {
-      app.set('a', 1)
-      app.set('b', 2)
-
-      sub.level('request', ['req'])
-      sub.def('request', function(req) {
-        return req * 10
+      let sub = new App
+      sub.set('a', 'a')
+      sub.set('d', 'd')
+      sub.def('ab', {pre: ['c', 'd']}, function(a, b) {
+        return a + b
       })
-      sub.def('response', function*(request, a, b) {
-        var res = yield request({req: 10})
-        return res + a + b
-      })
-
-      app.level('request', ['req'])
-      app.def('request', function(req) {
-        return req.toUpperCase()
-      })
+      sub.level('Ab', 'ab', ['a', 'b'])
 
       app.install('sub', sub)
 
-      app.def('main', function*(sub_response, request, sub_request) {
-        var res = yield request({req: 'a'})
-        res.should.equal('A')
-        sub_response.should.equal(103)
-        var subres = yield sub_request({req: 5})
-        subres.should.equal(50)
-        return 1
+      app.defs.should.have.property('sub_ab').with.properties({
+        args: ['sub_a', 'b'],
+        pre:  ['c', 'sub_d']
       })
-      app.expect(1, done)
+
+      app.defs.should.have.property('sub_Ab').eql({
+        main: 'sub_ab',
+        seeds: ['sub_a', 'sub_b']
+      })
+
+      app.set('b', 'b')
+      app.set('c', 'c')
+
+      app.def('main', function(sub_ab, sub_Ab) {
+        return sub_ab + sub_Ab('A').value
+      })
+
+      app.expect('abAb', done)
     })
 
-    it('dynamic eval', function(done) {
+
+    it('namespacing dynamic eval', function(done) {
+      let sub = new App
       sub.set('a', 'a')
-      sub.def('A', {uses: ['a']}, function(evaluate) {
-        return evaluate('a')
+      sub.set('b', 'b')
+      sub.def('dyn', {uses: ['a', 'b', 'c', 'd']}, function*(evaluate) {
+        return (yield evaluate('a')) + (yield evaluate('b')) + (yield evaluate('c')) + (yield evaluate('d'))
       })
+
+      app.set('sub_c', 'c')
+      app.set('d', 'd')
       app.install('sub', sub)
-      app.set('a', 1)
-      app.def('main', function(a, sub_A) {
-        a.should.equal(1)
-        sub_A.should.equal('a')
-        return 1
+
+      app.defs.should.have.property('sub_dyn').with.properties({
+        uses: ['sub a', 'sub b', 'sub c', 'd'],
+        args: ['evaluate']
       })
-      app.expect(1, done)
+
+      app.def('main', (sub_dyn) => sub_dyn)
+
+      app.expect('abcd', done)
     })
   })
 })
