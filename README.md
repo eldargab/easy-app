@@ -1,118 +1,39 @@
 # easy-app
 
-Easy-app is based on the idea, that you can often structure computations as a list of
-interdependent tasks. It does essentially the same thing as build tools like
-`make`, `rake` and numerous IoC containers - abstracts away the
-problem of execution order and caching. However, there is a novel part as well.
-Unlike other IoC systems, it supports multiple runtime levels. This feature allows
-to compose the entire application as a plain list of (idempotent) functions.
-It's simple. Need a new feature? Don't think! Just throw a couple of functions.
+This library suggests programming model with the same
+core idea as found in DI containers and build systems like make.
+However here we refine the definition of typical container to
+allow much more effective and broad usage.
 
-# Example
+## Programming model
 
-To illustrate above, lets show how one can implement JSON API for some
-social network.
+Application (or any complex function) is described as a set
+of global names, where the value of each name can be defined in following 3 ways:
 
-We start with app level settings
+  * As a constant
+  * As a function, which can accept as arguments values of other names
+  * As a level (A tuple of main value and a list of seeds)
 
-```javascript
-var App = require('easy-app')
-var app = new App
-
-app.set('connectionString', process.env.DB_CONNECTION)
-
-app.def('db', function(connectionString) {
-  return open(connectionString)
-})
-```
-
-Since we are building http server, lets define one
+The definition above is best made clear by an example.
 
 ```javascript
-app.def('server', function(request) {
-  return http.createServer(function(req, res) {
-    request({req: req}).get(function(err, response) {
-      if (err) response = {status: 500}
-      res.writeHead(response.status, response.headers)
-      res.end(response.body)
-    })
-  })
-})
+const App = require('easy-app')
+let app = new App
+
+app.def('a', () => 'a')
+
+app.def('ab', (a, b) => a + b)
+
+app.level('Ab', 'ab', ['b'])
+
+app.def('abc', (Ab, c) => Ab('BB') + Ab('bb') + c)
+
+app.level('Abc', 'abc', ['c'])
+
+let abc = app.compile('Abc')
+
+abc('C') // => 'aBBabbC'
 ```
-
-How is this `request` function is defined? Surprisingly, its just a regular task!
-
-```javascript
-app.def('request', function*(route, evaluate, response) {
-  try {
-    var res = yield evaluate(route.name)
-  } catch(e) {
-    if (!e.http) throw e
-    res = e
-  }
-  return response({res: res})
-})
-
-app.def('route', function(req) {
-  return router.match(req)
-})
-
-app.level('request', ['req'])
-```
-
-The line `app.level('request', ['req'])` says, that the task `request` is
-an entry point (main function) of the similarly named level `request`, and that,
-this level requires `req` as a seed value, and hence all tasks from this level
-can use it.
-
-Our request handling logic is as follows. First we match the http request against
-available routes to determine the handler task,
-then dynamically evaluate it to get the response, and since our serialization steps
-could be potentially complex, we put them into container as well and define yet another
-level.
-
-```javascript
-app.level('response', 'res')
-
-app.def('response', function(req, res) {
-  // usual http stuff here
-})
-```
-
-Now, once we established a foundation, we can go ahead and just enjoy building the app.
-
-```javascript
-// HTTP: GET /friends
-app.def('friends', function(user, db) {
-  return db.getFriendsOf(user)
-})
-
-app.def('user', function(mayBeUser) {
-  if (mayBeUser) return mayBeUser
-  throw error(403) // respond with 403 Forbiden
-})
-
-app.def('mayBeUser', function(cookies, db) {
-  return cookies.auth && db.getUser(cookies.auth)
-})
-
-app.def('cookies', function(req) {
-  let cookies = req.headers['cookies']
-  return parse(cookies)
-})
-```
-
-and run it
-
-```javascript
-app.def('main', function(server) {
-  server.listen(3000)
-})
-
-app.run()
-```
-
-That's it.
 
 ## Installation
 
@@ -127,7 +48,7 @@ This work initially inspired by
 
 (The MIT License)
 
-Copyright (c) 2013 Eldar Gabdullin <eldargab@gmail.com>
+Copyright (c) 2018 Eldar Gabdullin <eldargab@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
