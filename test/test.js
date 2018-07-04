@@ -1,10 +1,10 @@
-var should = require('should')
-var go = require('go-async')
-var App = require('..')
+const should = require('should')
+const go = require('go-async')
+const App = require('..')
 
 
 describe('easy-app', function() {
-  var app
+  let app
 
   beforeEach(function() {
     app = new App
@@ -132,6 +132,41 @@ describe('easy-app', function() {
 
       app.expect(1, done)
     })
+  })
+
+
+  describe('Lazy arguments', function() {
+    it('Basic usage', function(done) {
+      let called = 0
+
+      app.def('a', function() {
+        called += 1
+        return 'a'
+      })
+
+      app.def('main', function*(a$) {
+        called.should.equal(0)
+        let a1 = yield a$()
+        let a2 = yield a$()
+        called.should.equal(1)
+        return a1 + a2
+      })
+
+      app.expect('aa', done)
+    })
+
+    it('should return an instance of future', function(done) {
+      app.def('a', () => 'a')
+
+      app.def('main', function(a$) {
+        let future = a$()
+        future.should.be.an.instanceOf(go.Future)
+        future.value.should.equal('a')
+        return 1
+      })
+
+      app.expect(1, done)
+    });
   })
 
 

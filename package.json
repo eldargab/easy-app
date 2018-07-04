@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "Powerful container for applications",
   "author": "Eldar Gabdullin <eldargab@gmail.com>",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git://github.com/eldargab/easy-app"
@@ -16,14 +17,15 @@
     "test": "mocha -R dot"
   },
   "dependencies": {
-    "fn-args": "^3.0.0",
-    "is-var-name": "^1.0.0",
+    "go-async": "^1.0.0",
+    "is-var-name": "^2.0.0",
     "lodash.clonedeep": "^4.5.0",
-    "lodash.forown": "^4.4.0"
+    "lodash.forown": "^4.4.0",
+    "parse-fn-args": "^1.0.0"
   },
   "devDependencies": {
     "benchmark": "^2.1.4",
-    "mocha": "^2.2.5",
-    "should": "^7.0.1"
+    "mocha": "^5.2.0",
+    "should": "^13.2.1"
   }
 }

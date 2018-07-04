@@ -18,6 +18,7 @@ The definition above is best made clear by an example.
 
 ```javascript
 const App = require('easy-app')
+
 let app = new App
 
 app.def('a', () => 'a')
