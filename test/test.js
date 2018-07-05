@@ -9,10 +9,8 @@ describe('easy-app', function() {
   beforeEach(function() {
     app = new App
 
-    app.level('Main', 'main')
-
     app.expect = function(val, done) {
-      app.compile('Main')().get(function(err, ret) {
+      app.run('main').get(function(err, ret) {
         if (err) return done(err)
         ret.should.equal(val)
         done()
@@ -209,7 +207,8 @@ describe('easy-app', function() {
 
       app.defs.should.have.property('sub_Ab').eql({
         main: 'sub_ab',
-        seeds: ['sub_a', 'sub_b']
+        seeds: ['sub_a', 'sub_b'],
+        ns: 'sub'
       })
 
       app.set('b', 'b')
@@ -244,5 +243,55 @@ describe('easy-app', function() {
 
       app.expect('abcd', done)
     })
+  })
+  
+  
+  describe('Getting task namespace at runtime', function() {
+    it('test namespace is null for directly defined or installed task', function(done) {
+      app.def('a', function(namespace) {
+        should.not.exist(namespace)
+        return 1
+      })
+
+      let sub = new App
+
+      sub.def('b_c', function(namespace) {
+        should.not.exist(namespace)
+        return 2
+      })
+
+      app.install('', sub)
+
+      app.def('main', function(a, b_c) {
+        return a + b_c
+      })
+
+      app.expect(3, done)
+    })
+
+    it('test namespace is correctly set for sub-app tasks', function(done) {
+      let s1 = new App
+      let s2 = new App
+
+      s2.def('a', function(namespace) {
+        namespace.should.equal('s1_s2')
+        return 'a'
+      })
+
+      s1.def('b', function(namespace) {
+        namespace.should.equal('s1')
+        return 'b'
+      })
+
+      s1.install('s2', s2)
+
+      app.install('s1', s1)
+
+      app.def('main', function(s1_s2_a, s1_b) {
+        return s1_s2_a + s1_b
+      })
+
+      app.expect('ab', done)
+    });
   })
 })
