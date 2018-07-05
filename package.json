@@ -1,6 +1,6 @@
 {
   "name": "easy-app",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-alpha.1",
   "description": "Powerful container for applications",
   "author": "Eldar Gabdullin <eldargab@gmail.com>",
   "license": "MIT",
