@@ -38,11 +38,9 @@ app.def('j1234', (j12, j34) => j12 + j34)
 
 app.def('ij', (i1234, j1234) => i1234 + j1234)
 
-app.level('I' , 'i1234', ['si1', 'si2', 'si3', 'si4'])
-app.level('IJ', 'ij'   , ['si1', 'si2', 'si3', 'si4', 'sj1', 'sj2', 'sj3', 'sj4'])
 
-const I  = app.compile('I')
-const IJ = app.compile('IJ')
+const I  = app.compile('i1234', ['si1', 'si2', 'si3', 'si4'])
+const IJ = app.compile('ij'   , ['si1', 'si2', 'si3', 'si4', 'sj1', 'sj2', 'sj3', 'sj4'])
 
 
 suite.add('7 sync tasks', function() {
