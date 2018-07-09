@@ -21,7 +21,7 @@
     "is-var-name": "^2.0.0",
     "lodash.clonedeep": "^4.5.0",
     "lodash.forown": "^4.4.0",
-    "parse-fn-args": "^1.0.0"
+    "parse-fn-args": "^1.0.1"
   },
   "devDependencies": {
     "benchmark": "^2.1.4",

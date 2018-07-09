@@ -243,6 +243,19 @@ describe('easy-app', function() {
 
       app.expect('abcd', done)
     })
+
+
+    it('namespacing lazy arguments', function(done) {
+      let sub = new App
+      sub.def('foo', () => 'foo')
+      sub.def('bar', foo$ => foo$())
+
+      app.install('sub', sub)
+
+      app.def('main', sub_bar => sub_bar)
+
+      app.expect('foo', done)
+    })
   })
   
   
