@@ -1,40 +1,6 @@
 # easy-app
 
-This library suggests programming model with the same
-core idea as found in DI containers and build systems like make.
-However here we refine the definition of typical container to
-allow much more effective and broad usage.
-
-## Programming model
-
-Application (or any complex function) is described as a set
-of global names, where the value of each name can be defined in following 3 ways:
-
-  * As a constant
-  * As a function, which can accept as arguments values of other names
-  * As a level (A tuple of main value and a list of seeds)
-
-The definition above is best made clear by an example.
-
-```javascript
-const App = require('easy-app')
-
-let app = new App
-
-app.def('a', () => 'a')
-
-app.def('ab', (a, b) => a + b)
-
-app.level('Ab', 'ab', ['b'])
-
-app.def('abc', (Ab, c) => Ab('BB') + Ab('bb') + c)
-
-app.level('Abc', 'abc', ['c'])
-
-let abc = app.compile('Abc')
-
-abc('C') // => 'aBBabbC'
-```
+See this article for the rational - https://medium.com/@eldargab/dependency-based-programming-framework-e792adc1cbfa
 
 ## Installation
 
