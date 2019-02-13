@@ -91,6 +91,32 @@ describe('easy-app', function() {
   })
 
 
+  it('Closable resources', function(done) {
+    let close_trace = []
+
+    function close(x) {
+      close_trace.push(x)
+    }
+
+    app.def('a', {close}, function() { return 1})
+    app.def('ab', {close}, function(a, b) { return a + b })
+    app.def('z', function(ab) { return 2 * ab })
+    app.level('Z', 'z', ['b'])
+
+    app.def('main', function*(Z) {
+      let x = yield Z(2)
+      let y = yield Z(3)
+      return x + y
+    })
+
+    app.expect(14, function(err) {
+      if (err) return done(err)
+      close_trace.should.eql([3, 4, 1])
+      done()
+    })
+  })
+
+
   describe('Dynamic eval', function() {
     it('Basic dynamic call', function(done) {
       let called_a = 0
@@ -257,8 +283,8 @@ describe('easy-app', function() {
       app.expect('foo', done)
     })
   })
-  
-  
+
+
   describe('Getting task namespace at runtime', function() {
     it('test namespace is null for directly defined or installed task', function(done) {
       app.def('a', function(namespace) {
